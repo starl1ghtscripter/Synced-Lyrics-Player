@@ -17,6 +17,7 @@
 :root {
     --bg-color: #ffeef4;
     --bg-image: none;
+    --bg-blur: 0px;
     --container-bg-rgb: 255, 255, 255;
     --container-bg-opacity: 0.7;
     --container-bg: rgba(var(--container-bg-rgb), var(--container-bg-opacity));
@@ -45,9 +46,6 @@ body {
     margin: 0;
     height: 100vh;
     background-color: var(--bg-color);
-    background-image: var(--bg-image);
-    background-size: cover;
-    background-position: center;
     color: var(--ui-text-color);
     display: flex;
     align-items: center;
@@ -55,6 +53,23 @@ body {
     overflow: hidden;
     font-family: var(--lyric-font-family);
     transition: background-color 0.4s ease;
+    position: relative;
+}
+
+/* Background Image Layer for Independent Blur Control */
+body::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(var(--bg-blur));
+    z-index: -1;
+    transition: filter 0.3s ease, background-image 0.4s ease;
 }
 
 .container {
@@ -191,6 +206,12 @@ button {
 button:hover {
     transform: translateY(-1px);
     filter: brightness(1.05);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Lyrics Display Container */
@@ -578,6 +599,17 @@ button:hover {
     </div>
 
     <div class="settings-grid">
+        <!-- Undo / Redo System -->
+        <div class="setting-item">
+            <label>History (Undo / Redo)</label>
+            <div class="preset-buttons">
+                <button id="undoBtn" onclick="undoTheme()" disabled>↩ Undo</button>
+                <button id="redoBtn" onclick="redoTheme()" disabled>↪ Redo</button>
+            </div>
+        </div>
+
+        <hr class="drawer-divider">
+
         <!-- Quick Theme Presets -->
         <div class="setting-item">
             <label>Quick Presets</label>
@@ -710,7 +742,7 @@ button:hover {
             <input type="color" id="bgColorInput" value="#ffeef4">
         </div>
 
-        <!-- Glass & Layout Adjustments -->
+        <!-- Glass & Background Image Adjustments -->
         <div class="setting-item">
             <label>Container Backdrop Blur (<span id="blurVal">20px</span>)</label>
             <input type="range" id="blurInput" min="0" max="40" value="20">
@@ -718,6 +750,11 @@ button:hover {
         <div class="setting-item">
             <label>Background Image URL</label>
             <input type="text" id="bgImageInput" placeholder="https://example.com/image.jpg">
+        </div>
+
+        <div class="setting-item">
+            <label>Background Image Blur (<span id="bgBlurVal">0px</span>)</label>
+            <input type="range" id="bgBlurInput" min="0" max="30" step="1" value="0">
         </div>
     </div>
 </div>
@@ -740,7 +777,61 @@ const trackArtist = document.getElementById("trackArtist");
 let lyrics = [];
 let currentActiveIndex = -1;
 
-// Helper to convert Hex color values to RGB format
+// --- UNDO / REDO HISTORY SYSTEM ---
+let historyStack = [];
+let historyIndex = -1;
+let isApplyingHistory = false;
+
+function saveHistoryState() {
+    if (isApplyingHistory) return;
+    const currentState = getCurrentPresetData();
+    
+    if (historyIndex >= 0) {
+        const lastState = historyStack[historyIndex];
+        if (JSON.stringify(lastState) === JSON.stringify(currentState)) return;
+    }
+
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(currentState);
+    historyIndex++;
+
+    updateUndoRedoButtons();
+}
+
+function undoTheme() {
+    if (historyIndex > 0) {
+        historyIndex--;
+        isApplyingHistory = true;
+        applyPreset(historyStack[historyIndex]);
+        isApplyingHistory = false;
+        updateUndoRedoButtons();
+    }
+}
+
+function redoTheme() {
+    if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        isApplyingHistory = true;
+        applyPreset(historyStack[historyIndex]);
+        isApplyingHistory = false;
+        updateUndoRedoButtons();
+    }
+}
+
+function updateUndoRedoButtons() {
+    document.getElementById("undoBtn").disabled = historyIndex <= 0;
+    document.getElementById("redoBtn").disabled = historyIndex >= historyStack.length - 1;
+}
+
+window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) redoTheme();
+        else undoTheme();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        redoTheme();
+    }
+});
+
 function hexToRgb(hex) {
     let c = hex.replace('#', '');
     if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -748,7 +839,6 @@ function hexToRgb(hex) {
     return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
 }
 
-// Built-in Presets Definition
 const builtInPresets = {
     pastelPink: {
         fontFamily: "Fredoka",
@@ -768,7 +858,8 @@ const builtInPresets = {
         containerBorderStyle: "dashed",
         containerBorderWidth: "2",
         blur: "20",
-        bgImage: ""
+        bgImage: "",
+        bgBlur: "0"
     },
     midnightBlue: {
         fontFamily: "Poppins",
@@ -788,7 +879,8 @@ const builtInPresets = {
         containerBorderStyle: "solid",
         containerBorderWidth: "1",
         blur: "25",
-        bgImage: ""
+        bgImage: "",
+        bgBlur: "0"
     },
     matchaGreen: {
         fontFamily: "Quicksand",
@@ -808,7 +900,8 @@ const builtInPresets = {
         containerBorderStyle: "dotted",
         containerBorderWidth: "3",
         blur: "15",
-        bgImage: ""
+        bgImage: "",
+        bgBlur: "0"
     },
     lavender: {
         fontFamily: "Comfortaa",
@@ -828,29 +921,25 @@ const builtInPresets = {
         containerBorderStyle: "dashed",
         containerBorderWidth: "2",
         blur: "20",
-        bgImage: ""
+        bgImage: "",
+        bgBlur: "0"
     }
 };
 
 function loadBuiltInPreset(key) {
-    if (builtInPresets[key]) {
-        applyPreset(builtInPresets[key]);
-    }
+    if (builtInPresets[key]) applyPreset(builtInPresets[key]);
 }
 
-// Upload Handlers & ID3 Reader
 document.getElementById("musicUpload").addEventListener("change", function(e) {
     const file = e.target.files[0];
     if (file) {
         audio.src = URL.createObjectURL(file);
         playBtn.textContent = "▶";
 
-        // Default title to filename without extension
         const defaultTitle = file.name.replace(/\.[^/.]+$/, "");
         trackTitle.textContent = defaultTitle;
         trackArtist.textContent = "Unknown Artist";
 
-        // Read embedded metadata & cover art with jsmediatags
         if (window.jsmediatags) {
             window.jsmediatags.read(file, {
                 onSuccess: function(tag) {
@@ -872,13 +961,9 @@ document.getElementById("musicUpload").addEventListener("change", function(e) {
                         resetAlbumCover();
                     }
                 },
-                onError: function() {
-                    resetAlbumCover();
-                }
+                onError: function() { resetAlbumCover(); }
             });
-        } else {
-            resetAlbumCover();
-        }
+        } else { resetAlbumCover(); }
     }
 });
 
@@ -892,18 +977,14 @@ document.getElementById("lrcUpload").addEventListener("change", function(e) {
     const file = e.target.files[0];
     if (file) {
         const reader = new FileReader();
-        reader.onload = function(event) {
-            parseAndLoadLyrics(event.target.result);
-        };
+        reader.onload = function(event) { parseAndLoadLyrics(event.target.result); };
         reader.readAsText(file);
     }
 });
 
 function loadManualLyrics() {
     const text = document.getElementById("manualLyricsInput").value;
-    if (text.trim()) {
-        parseAndLoadLyrics(text);
-    }
+    if (text.trim()) parseAndLoadLyrics(text);
 }
 
 function togglePlay() {
@@ -955,7 +1036,6 @@ function updateSeekbarFill() {
     seekbar.style.background = `linear-gradient(to right, ${btnColor} 0%, ${btnColor} ${percent}%, rgba(0, 0, 0, 0.1) ${percent}%, rgba(0, 0, 0, 0.1) 100%)`;
 }
 
-// Parse LRC format
 function parseAndLoadLyrics(text) {
     lyrics = [];
     const lines = text.split("\n");
@@ -1042,12 +1122,10 @@ function updateLyrics() {
     }
 }
 
-// Side Drawer Toggle
 function toggleSettings() {
     document.getElementById("sideDrawer").classList.toggle("open");
 }
 
-// Maximize View Toggle
 function toggleMaximize() {
     const container = document.getElementById("playerContainer");
     const maxBtn = document.getElementById("maxBtn");
@@ -1055,7 +1133,6 @@ function toggleMaximize() {
     maxBtn.textContent = container.classList.contains("maximized") ? "Restore" : "Maximize";
 }
 
-// Font Handling & Google Font Injection
 const fontDropdown = document.getElementById("fontDropdown");
 const customFontGroup = document.getElementById("customFontGroup");
 
@@ -1067,6 +1144,7 @@ fontDropdown.addEventListener("change", (e) => {
         customFontGroup.style.display = "none";
         root.style.setProperty('--lyric-font-family', `'${val}', cursive, sans-serif`);
     }
+    saveHistoryState();
 });
 
 function applyCustomFont() {
@@ -1080,65 +1158,97 @@ function applyCustomFont() {
     
     link.onload = () => {
         root.style.setProperty('--lyric-font-family', `'${fontName}', sans-serif`);
+        saveHistoryState();
     };
     document.head.appendChild(link);
 }
 
-// Controls & Sliders Real-time Sync
 document.getElementById("fontSizeInput").addEventListener("input", (e) => {
     const val = e.target.value + "px";
     root.style.setProperty('--lyric-font-size', val);
     document.getElementById("fontSizeVal").textContent = val;
 });
+document.getElementById("fontSizeInput").addEventListener("change", saveHistoryState);
 
 document.getElementById("fontWeightInput").addEventListener("change", (e) => {
     root.style.setProperty('--lyric-font-weight', e.target.value);
+    saveHistoryState();
 });
 
 document.getElementById("uiTextColorInput").addEventListener("input", (e) => root.style.setProperty('--ui-text-color', e.target.value));
+document.getElementById("uiTextColorInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("activeColorInput").addEventListener("input", (e) => root.style.setProperty('--lyric-active-color', e.target.value));
+document.getElementById("activeColorInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("inactiveColorInput").addEventListener("input", (e) => root.style.setProperty('--lyric-inactive-color', e.target.value));
+document.getElementById("inactiveColorInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("activeOpacityInput").addEventListener("input", (e) => root.style.setProperty('--lyric-active-opacity', e.target.value));
+document.getElementById("activeOpacityInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("inactiveOpacityInput").addEventListener("input", (e) => root.style.setProperty('--lyric-inactive-opacity', e.target.value));
+document.getElementById("inactiveOpacityInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("btnBgInput").addEventListener("input", (e) => {
     root.style.setProperty('--btn-bg', e.target.value);
     updateSeekbarFill();
 });
+document.getElementById("btnBgInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("btnColorInput").addEventListener("input", (e) => root.style.setProperty('--btn-color', e.target.value));
+document.getElementById("btnColorInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("containerBgInput").addEventListener("input", (e) => {
     root.style.setProperty('--container-bg-rgb', hexToRgb(e.target.value));
 });
+document.getElementById("containerBgInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("containerOpacityInput").addEventListener("input", (e) => {
     root.style.setProperty('--container-bg-opacity', e.target.value);
 });
+document.getElementById("containerOpacityInput").addEventListener("change", saveHistoryState);
 
-// Border Listeners
 document.getElementById("containerBorderColorInput").addEventListener("input", (e) => {
     root.style.setProperty('--container-border-color', e.target.value);
 });
+document.getElementById("containerBorderColorInput").addEventListener("change", saveHistoryState);
+
 document.getElementById("containerBorderStyleInput").addEventListener("change", (e) => {
     root.style.setProperty('--container-border-style', e.target.value);
+    saveHistoryState();
 });
+
 document.getElementById("containerBorderWidthInput").addEventListener("input", (e) => {
     const val = e.target.value + "px";
     root.style.setProperty('--container-border-width', val);
     document.getElementById("borderWidthVal").textContent = val;
 });
+document.getElementById("containerBorderWidthInput").addEventListener("change", saveHistoryState);
 
 document.getElementById("bgColorInput").addEventListener("input", (e) => root.style.setProperty('--bg-color', e.target.value));
+document.getElementById("bgColorInput").addEventListener("change", saveHistoryState);
 
 document.getElementById("blurInput").addEventListener("input", (e) => {
     const val = e.target.value + "px";
     root.style.setProperty('--container-blur', val);
     document.getElementById("blurVal").textContent = val;
 });
+document.getElementById("blurInput").addEventListener("change", saveHistoryState);
 
 document.getElementById("bgImageInput").addEventListener("input", (e) => {
     const url = e.target.value.trim();
     root.style.setProperty('--bg-image', url ? `url('${url}')` : 'none');
 });
+document.getElementById("bgImageInput").addEventListener("change", saveHistoryState);
 
-// JSON PRESET SYSTEM (EXPORT & IMPORT)
+document.getElementById("bgBlurInput").addEventListener("input", (e) => {
+    const val = e.target.value + "px";
+    root.style.setProperty('--bg-blur', val);
+    document.getElementById("bgBlurVal").textContent = val;
+});
+document.getElementById("bgBlurInput").addEventListener("change", saveHistoryState);
+
 function getCurrentPresetData() {
     return {
         fontFamily: fontDropdown.value === "CUSTOM" ? document.getElementById("customFontInput").value : fontDropdown.value,
@@ -1159,7 +1269,8 @@ function getCurrentPresetData() {
         containerBorderWidth: document.getElementById("containerBorderWidthInput").value,
         bgColor: document.getElementById("bgColorInput").value,
         blur: document.getElementById("blurInput").value,
-        bgImage: document.getElementById("bgImageInput").value
+        bgImage: document.getElementById("bgImageInput").value,
+        bgBlur: document.getElementById("bgBlurInput").value
     };
 }
 
@@ -1265,6 +1376,11 @@ function applyPreset(p) {
         document.getElementById("bgImageInput").value = p.bgImage;
         root.style.setProperty('--bg-image', p.bgImage ? `url('${p.bgImage}')` : 'none');
     }
+    if (p.bgBlur !== undefined) {
+        document.getElementById("bgBlurInput").value = p.bgBlur;
+        root.style.setProperty('--bg-blur', p.bgBlur + "px");
+        document.getElementById("bgBlurVal").textContent = p.bgBlur + "px";
+    }
     if (p.fontFamily) {
         if (p.isCustomFont) {
             fontDropdown.value = "CUSTOM";
@@ -1277,7 +1393,10 @@ function applyPreset(p) {
             root.style.setProperty('--lyric-font-family', `'${p.fontFamily}', sans-serif`);
         }
     }
+    saveHistoryState();
 }
+
+saveHistoryState();
 </script>
 
 </body>
