@@ -2,9 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<!-- Crucial for proper scaling on iPhone and mobile browsers -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Synced Lyrics Player</title>
 
-<!-- Preload default Google Fonts for dropdown options -->
+<!-- Preload default Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Inter:wght@400;700&family=Lobster&family=Montserrat:wght@400;700&family=Pacifico&family=Playfair+Display:wght@700&family=Poppins:wght@400;700&family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -31,6 +33,7 @@
 body {
     margin: 0;
     height: 100vh;
+    height: 100dvh; /* Mobile viewport fix */
     background-color: var(--bg-color);
     background-image: var(--bg-image);
     background-size: cover;
@@ -45,14 +48,15 @@ body {
 
 .container {
     width: 850px;
-    max-width: 90%;
-    padding: 35px;
+    max-width: 92%;
+    padding: 25px;
     border-radius: 25px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(20px);
     text-align: center;
     position: relative;
-    max-height: 95vh;
+    max-height: 92vh;
+    max-height: 92dvh;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -60,19 +64,23 @@ body {
 
 .top-actions {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 15px;
+    right: 15px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    z-index: 10;
 }
 
 .top-actions button {
-    padding: 8px 15px;
-    font-size: 14px;
+    padding: 6px 12px;
+    font-size: 13px;
     margin-bottom: 0;
 }
 
-h1 { margin-top: 0; }
+h1 { 
+    margin-top: 0;
+    font-size: 1.5rem;
+}
 
 .input-section {
     display: flex;
@@ -88,7 +96,7 @@ input[type="file"], textarea, input[type="text"], select {
     border-radius: 12px;
     background: rgba(255,255,255,0.12);
     color: white;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 select option {
@@ -97,16 +105,16 @@ select option {
 }
 
 textarea {
-    height: 100px;
+    height: 90px;
     resize: vertical;
 }
 
 button {
-    padding: 12px 35px;
+    padding: 12px 25px;
     border: none;
     border-radius: 50px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 15px;
     margin-bottom: 10px;
     background-color: var(--btn-bg);
     color: var(--btn-color);
@@ -124,11 +132,11 @@ audio {
 
 .lyrics {
     margin-top: 15px;
-    height: 300px;
+    height: 250px;
     overflow-y: auto;
     position: relative;
     scroll-behavior: smooth;
-    padding: 120px 0;
+    padding: 100px 0;
     flex-grow: 1;
 }
 
@@ -145,6 +153,7 @@ audio {
     transition: opacity .35s ease, transform .35s ease, color .35s ease;
     cursor: pointer;
     user-select: none;
+    word-wrap: break-word;
 }
 
 .line:hover {
@@ -153,7 +162,7 @@ audio {
 
 .line.active {
     opacity: var(--lyric-active-opacity);
-    transform: scale(1.15);
+    transform: scale(1.1);
     color: var(--lyric-active-color);
     font-weight: var(--lyric-font-weight);
 }
@@ -162,13 +171,16 @@ audio {
     opacity: var(--lyric-inactive-opacity);
 }
 
+/* MAXIMIZED VIEW STYLES */
 .container.maximized {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     max-width: 100%;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
-    padding: 20px 50px;
+    padding: 15px;
 }
 
 .container.maximized .input-section,
@@ -180,16 +192,19 @@ audio {
     height: 100%;
 }
 
+/* SIDE PANEL (DRAWER) FOR CUSTOMIZATION */
 .side-drawer {
     position: fixed;
     top: 0;
-    right: -360px;
-    width: 340px;
+    right: -100%;
+    width: 320px;
+    max-width: 85%;
     height: 100vh;
+    height: 100dvh;
     background: rgba(20, 20, 20, 0.95);
     backdrop-filter: blur(15px);
     box-shadow: -5px 0 15px rgba(0,0,0,0.5);
-    padding: 25px;
+    padding: 20px;
     z-index: 100;
     transition: right 0.3s ease;
     overflow-y: auto;
@@ -245,10 +260,26 @@ audio {
 
 .preset-buttons button {
     flex: 1;
-    font-size: 13px;
-    padding: 10px;
+    font-size: 12px;
+    padding: 8px;
     margin-bottom: 0;
     border-radius: 10px;
+}
+
+/* Mobile Responsiveness Rules */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px 15px;
+    }
+    
+    h1 {
+        font-size: 1.2rem;
+        margin-top: 25px;
+    }
+
+    :root {
+        --lyric-font-size: 18px; /* Smaller default lyric size for mobile screens */
+    }
 }
 </style>
 </head>
@@ -265,7 +296,8 @@ audio {
     <h1>🎵 Synced Lyrics Player</h1>
 
     <div class="input-section" id="inputSection">
-        <input type="file" id="audioFile" accept="audio/*">
+        <!-- Explicit file formats allow iOS Chrome / Safari to pick audio files from Files app -->
+        <input type="file" id="audioFile" accept="audio/*, .mp3, .m4a, .wav, .aac, .ogg, .flac">
         <textarea id="lyricsInput" placeholder="[00:00:000]Lyric Here&#10;[00:05.500]Next Lyric"></textarea>
         <button onclick="loadLyrics()">Load Lyrics</button>
     </div>
@@ -320,7 +352,7 @@ audio {
 
         <div class="setting-item">
             <label>Font Size (<span id="fontSizeVal">24px</span>)</label>
-            <input type="range" id="fontSizeInput" min="16" max="48" step="1" value="24">
+            <input type="range" id="fontSizeInput" min="14" max="48" step="1" value="24">
         </div>
 
         <div class="setting-item">
@@ -379,7 +411,7 @@ const root = document.documentElement;
 let lyrics = [];
 let currentActiveIndex = -1;
 
-// Load Audio
+// Load Audio File
 document.getElementById("audioFile").addEventListener("change", function(e){
     const file = e.target.files[0];
     if(file){
