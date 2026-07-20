@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Comfortaa:wght@400;700&family=Fredoka:wght@400;600;700&family=Inter:wght@400;700&family=Lobster&family=Montserrat:wght@400;700&family=Nunito:wght@400;700&family=Pacifico&family=Playfair+Display:wght@700&family=Poppins:wght@400;700&family=Quicksand:wght@400;700&family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-<!-- JS MediaTags Library for parsing embedded MP3/FLAC metadata & cover art -->
+<!-- JS MediaTags Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 
 <style>
@@ -36,6 +36,8 @@
     --lyric-font-family: 'Fredoka', cursive, sans-serif;
     --lyric-font-size: 26px;
     --lyric-font-weight: 600;
+    --lyric-letter-spacing: 0px;
+    --lyric-line-height: 1.5;
 }
 
 * {
@@ -56,7 +58,7 @@ body {
     position: relative;
 }
 
-/* Background Image Layer for Independent Blur Control */
+/* Background Image Layer */
 body::before {
     content: "";
     position: absolute;
@@ -68,8 +70,22 @@ body::before {
     background-size: cover;
     background-position: center;
     filter: blur(var(--bg-blur));
-    z-index: -1;
+    z-index: -2;
     transition: filter 0.3s ease, background-image 0.4s ease;
+}
+
+/* Background Video Layer */
+.bg-video {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    object-fit: cover;
+    filter: blur(var(--bg-blur));
+    z-index: -1;
+    display: none;
+    transition: filter 0.3s ease;
 }
 
 .container {
@@ -113,7 +129,6 @@ h1 {
     letter-spacing: 0.5px;
 }
 
-/* Upload Controls Grid */
 .input-section {
     display: flex;
     flex-direction: column;
@@ -208,18 +223,10 @@ button:hover {
     filter: brightness(1.05);
 }
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Lyrics Display Container */
 .lyrics {
     height: 260px;
     overflow-y: auto;
     position: relative;
-    scroll-behavior: smooth;
     padding: 110px 0;
     flex-grow: 1;
     margin-top: 10px;
@@ -231,20 +238,86 @@ button:disabled {
 .line {
     font-family: var(--lyric-font-family);
     font-size: var(--lyric-font-size);
-    margin: 16px 0;
+    letter-spacing: var(--lyric-letter-spacing);
+    line-height: var(--lyric-line-height);
+    margin: 12px 0;
     opacity: var(--lyric-inactive-opacity);
     color: var(--lyric-inactive-color);
-    transform: scale(0.95);
-    transition: all 0.3s ease;
     cursor: pointer;
     user-select: none;
 }
 
-.line.active {
+/* --- ANIMATION PRESETS & DISTINCT STYLES --- */
+
+/* Preset 1: Default (Pop & Scale) */
+.anim-default .line {
+    transform: scale(0.92);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s, opacity 0.3s;
+}
+.anim-default .line.active {
     opacity: var(--lyric-active-opacity);
     color: var(--lyric-active-color);
     font-weight: var(--lyric-font-weight);
-    transform: scale(1.1);
+    transform: scale(1.15);
+}
+
+/* Preset 2: Glow / Neon Pulse */
+.anim-glow .line {
+    transform: scale(0.95);
+    transition: all 0.4s ease;
+}
+.anim-glow .line.active {
+    opacity: var(--lyric-active-opacity);
+    color: var(--lyric-active-color);
+    font-weight: var(--lyric-font-weight);
+    transform: scale(1.08);
+    text-shadow: 0 0 12px var(--lyric-active-color), 0 0 24px var(--lyric-active-color);
+}
+
+/* Preset 3: Fade In / Out */
+.anim-fade .line {
+    transform: none;
+    transition: opacity 0.8s ease-in-out, color 0.8s ease-in-out;
+    margin: 20px 0;
+}
+.anim-fade .line.active {
+    opacity: var(--lyric-active-opacity);
+    color: var(--lyric-active-color);
+    font-weight: var(--lyric-font-weight);
+}
+
+/* Preset 4: Snap / Cut (Instant step) */
+.anim-snap .line {
+    transform: none !important;
+    transition: none !important;
+}
+.anim-snap .line.active {
+    opacity: var(--lyric-active-opacity) !important;
+    color: var(--lyric-active-color) !important;
+    font-weight: var(--lyric-font-weight) !important;
+}
+
+/* Preset 5: Slide-In Kinetic */
+.anim-slide .line {
+    transform: translateX(-30px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, color 0.3s;
+}
+.anim-slide .line.active {
+    opacity: var(--lyric-active-opacity);
+    color: var(--lyric-active-color);
+    font-weight: var(--lyric-font-weight);
+    transform: translateX(0) scale(1.05);
+}
+
+/* Preset 6: Scroll Without Scaling */
+.anim-noscale .line {
+    transform: none;
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+.anim-noscale .line.active {
+    opacity: var(--lyric-active-opacity);
+    color: var(--lyric-active-color);
+    font-weight: var(--lyric-font-weight);
 }
 
 /* Custom Audio Player */
@@ -260,7 +333,6 @@ button:disabled {
     margin-top: 10px;
 }
 
-/* Track Metadata & Artwork Slot */
 .track-meta-container {
     display: flex;
     align-items: center;
@@ -268,6 +340,15 @@ button:disabled {
     max-width: 170px;
     min-width: 120px;
     overflow: hidden;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 14px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.track-meta-container:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: scale(1.02);
 }
 
 .album-cover-wrapper {
@@ -282,7 +363,6 @@ button:disabled {
     justify-content: center;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .album-cover-img {
@@ -368,7 +448,6 @@ button:disabled {
     border-radius: 50%;
     background: var(--btn-bg);
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .volume-container {
@@ -472,7 +551,7 @@ button:disabled {
     border-top-width: var(--container-border-width);
     border-top-style: var(--container-border-style);
     border-top-color: var(--container-border-color);
-    margin: 10px 0;
+    margin: 12px 0;
 }
 
 .settings-grid {
@@ -488,6 +567,12 @@ button:disabled {
     font-size: 12px;
     font-weight: 600;
     color: var(--ui-text-color);
+}
+
+.setting-item.row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .setting-item input[type="color"] {
@@ -531,10 +616,50 @@ button:disabled {
     border-radius: 10px;
     box-shadow: none;
 }
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 25px;
+    width: 320px;
+    border: var(--container-border-width) var(--container-border-style) var(--container-border-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
 </style>
 </head>
 
 <body>
+
+<!-- Background Video Tag -->
+<video id="bgVideo" class="bg-video" autoplay loop muted playsinline></video>
 
 <div class="container" id="playerContainer">
     
@@ -545,7 +670,6 @@ button:disabled {
 
     <h1>Synced Lyrics Player</h1>
 
-    <!-- File & Lyrics Upload Section -->
     <div class="input-section" id="inputSection">
         <div class="upload-row">
             <label for="musicUpload">Music</label>
@@ -560,15 +684,12 @@ button:disabled {
         <textarea class="lyrics-textarea" id="manualLyricsInput" placeholder="Paste custom lyrics here..." oninput="loadManualLyrics()"></textarea>
     </div>
 
-    <!-- Lyrics Container -->
-    <div class="lyrics" id="lyrics"></div>
+    <div class="lyrics anim-default" id="lyrics"></div>
 
-    <!-- Audio Element -->
-    <audio id="audio"></audio>
+    <audio id="audio" crossorigin="anonymous"></audio>
 
-    <!-- Custom Player Bar -->
     <div class="cute-audio-player">
-        <div class="track-meta-container">
+        <div class="track-meta-container" onclick="openMetadataModal()" title="Click to edit track info">
             <div class="album-cover-wrapper">
                 <img id="albumCoverImg" class="album-cover-img" alt="Album Cover">
                 <span id="albumCoverFallback" class="album-cover-fallback">🎵</span>
@@ -591,6 +712,32 @@ button:disabled {
     </div>
 </div>
 
+<!-- Edit Metadata Modal -->
+<div class="modal-overlay" id="metadataModal">
+    <div class="modal-content">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Edit Track Info</h3>
+            <button class="close-btn" onclick="closeMetadataModal()">✖</button>
+        </div>
+        <div class="setting-item">
+            <label>Track Name</label>
+            <input type="text" id="editTrackTitleInput" placeholder="Enter title...">
+        </div>
+        <div class="setting-item">
+            <label>Artist Name</label>
+            <input type="text" id="editTrackArtistInput" placeholder="Enter artist...">
+        </div>
+        <div class="setting-item">
+            <label>Cover Art</label>
+            <input type="file" id="editCoverInput" accept="image/*">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button style="background: transparent; color: var(--ui-text-color); box-shadow: none;" onclick="closeMetadataModal()">Cancel</button>
+            <button onclick="saveMetadataChanges()">Save</button>
+        </div>
+    </div>
+</div>
+
 <!-- Side Drawer Customization -->
 <div class="side-drawer" id="sideDrawer">
     <div class="drawer-header">
@@ -599,7 +746,7 @@ button:disabled {
     </div>
 
     <div class="settings-grid">
-        <!-- Undo / Redo System -->
+        <!-- History Controls -->
         <div class="setting-item">
             <label>History (Undo / Redo)</label>
             <div class="preset-buttons">
@@ -610,9 +757,123 @@ button:disabled {
 
         <hr class="drawer-divider">
 
-        <!-- Quick Theme Presets -->
+        <!-- AUDIO PROCESSING DSP SECTION -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">🎧 Audio DSP Controls</div>
+
         <div class="setting-item">
-            <label>Quick Presets</label>
+            <label>Playback Speed (<span id="speedVal">1.0x</span>)</label>
+            <input type="range" id="speedInput" min="0.5" max="2.0" step="0.05" value="1.0">
+        </div>
+
+        <div class="setting-item row">
+            <label for="preservePitchToggle">Preserve Pitch with Speed</label>
+            <input type="checkbox" id="preservePitchToggle" checked style="accent-color: var(--btn-bg);">
+        </div>
+
+        <div class="setting-item">
+            <label>Reverb Intensity (<span id="reverbVal">0%</span>)</label>
+            <input type="range" id="reverbInput" min="0" max="1" step="0.05" value="0">
+        </div>
+
+        <div class="setting-item">
+            <label>Equalizer Preset</label>
+            <select id="eqPresetDropdown">
+                <option value="flat" selected>Flat / Normal</option>
+                <option value="vocal">Vocal Boost</option>
+                <option value="bass">Bass Punch</option>
+                <option value="lofi">Lo-Fi Warmth</option>
+                <option value="acoustic">Acoustic Clarity</option>
+            </select>
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- LYRIC ANIMATION & SCROLL -->
+        <div class="setting-item">
+            <label>Lyric Animation Preset</label>
+            <select id="animPresetDropdown">
+                <option value="anim-default" selected>Default (Pop & Scale)</option>
+                <option value="anim-glow">Glow / Neon Pulse</option>
+                <option value="anim-fade">Fade In / Out (Smooth Scroll)</option>
+                <option value="anim-snap">Snap / Cut (Instant Jump Scroll)</option>
+                <option value="anim-slide">Slide-In Kinetic</option>
+                <option value="anim-noscale">Scroll Without Scaling</option>
+            </select>
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- BACKGROUND MEDIA & VIDEO -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">🖼️ Background Media</div>
+
+        <div class="setting-item">
+            <label>Background Video (.mp4, .webm)</label>
+            <input type="file" id="bgVideoInput" accept="video/mp4,video/webm">
+        </div>
+
+        <div class="setting-item">
+            <label>Background Image URL</label>
+            <input type="text" id="bgImageInput" placeholder="https://example.com/image.jpg">
+        </div>
+
+        <div class="setting-item">
+            <label>Background Blur (<span id="bgBlurVal">0px</span>)</label>
+            <input type="range" id="bgBlurInput" min="0" max="30" step="1" value="0">
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- TYPOGRAPHY CUSTOMIZATION -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">✒️ Font & Typography</div>
+
+        <div class="setting-item">
+            <label>Font Family</label>
+            <select id="fontDropdown">
+                <option value="Fredoka" selected>Fredoka (Rounded)</option>
+                <option value="Poppins">Poppins (Sans)</option>
+                <option value="Inter">Inter (Clean)</option>
+                <option value="Roboto">Roboto</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Playfair Display">Playfair Display (Serif)</option>
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Pacifico">Pacifico</option>
+                <option value="Lobster">Lobster</option>
+                <option value="Caveat">Caveat</option>
+                <option value="Roboto Mono">Roboto Mono</option>
+                <option value="CUSTOM">Custom Google Font...</option>
+            </select>
+
+            <div id="customFontGroup" style="display: none; margin-top: 6px;">
+                <input type="text" id="customFontInput" placeholder="Enter Google Font name...">
+                <button onclick="applyCustomFont()" style="width: 100%; margin-top: 6px; padding: 6px;">Apply</button>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label>Font Size (<span id="fontSizeVal">26px</span>)</label>
+            <input type="range" id="fontSizeInput" min="16" max="48" step="1" value="26">
+        </div>
+
+        <div class="setting-item">
+            <label>Font Weight / Thickness (<span id="fontWeightVal">600</span>)</label>
+            <input type="range" id="fontWeightInput" min="100" max="900" step="100" value="600">
+        </div>
+
+        <div class="setting-item">
+            <label>Letter Spacing (<span id="letterSpacingVal">0px</span>)</label>
+            <input type="range" id="letterSpacingInput" min="-2" max="10" step="0.5" value="0">
+        </div>
+
+        <div class="setting-item">
+            <label>Line Spacing / Height (<span id="lineHeightVal">1.5</span>)</label>
+            <input type="range" id="lineHeightInput" min="1" max="2.5" step="0.1" value="1.5">
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- COLOR & THEME PRESETS -->
+        <div class="setting-item">
+            <label>Quick Color Presets</label>
             <div class="preset-buttons">
                 <button onclick="loadBuiltInPreset('pastelPink')">🌸 Pastel Pink</button>
                 <button onclick="loadBuiltInPreset('midnightBlue')">🫐 Midnight</button>
@@ -621,9 +882,6 @@ button:disabled {
             </div>
         </div>
 
-        <hr class="drawer-divider">
-
-        <!-- Preset Management (JSON) -->
         <div class="setting-item">
             <label>Theme Import / Export</label>
             <div class="preset-buttons">
@@ -635,49 +893,6 @@ button:disabled {
 
         <hr class="drawer-divider">
 
-        <!-- Font Management & Google Font Loader -->
-        <div class="setting-item">
-            <label>Font Family</label>
-            <select id="fontDropdown">
-                <option value="Fredoka" selected>Fredoka (Default Rounded)</option>
-                <option value="Poppins">Poppins (Modern Sans)</option>
-                <option value="Inter">Inter (Clean Sans)</option>
-                <option value="Roboto">Roboto (Standard)</option>
-                <option value="Montserrat">Montserrat (Geometric)</option>
-
-                <option value="Playfair Display">Playfair Display (Serif)</option>
-                <option value="Bebas Neue">Bebas Neue (Display Caps)</option>
-                <option value="Pacifico">Pacifico (Handwritten)</option>
-                <option value="Lobster">Lobster (Script)</option>
-                <option value="Caveat">Caveat (Cursive)</option>
-                <option value="Roboto Mono">Roboto Mono (Monospace)</option>
-                <option value="CUSTOM">Custom Google Font...</option>
-            </select>
-
-            <div id="customFontGroup" style="display: none; margin-top: 6px;">
-                <input type="text" id="customFontInput" placeholder="Enter Google Font name...">
-                <button onclick="applyCustomFont()" style="width: 100%; margin-top: 6px; padding: 6px;">Apply Custom Font</button>
-            </div>
-        </div>
-
-        <div class="setting-item">
-            <label>Font Size (<span id="fontSizeVal">26px</span>)</label>
-            <input type="range" id="fontSizeInput" min="16" max="48" step="1" value="26">
-        </div>
-
-        <div class="setting-item">
-            <label>Active Font Weight</label>
-            <select id="fontWeightInput">
-                <option value="400">Normal (400)</option>
-                <option value="600" selected>Semi-Bold (600)</option>
-                <option value="700">Bold (700)</option>
-                <option value="900">Black (900)</option>
-            </select>
-        </div>
-
-        <hr class="drawer-divider">
-
-        <!-- Color & Opacity Controls -->
         <div class="setting-item">
             <label>UI Text Color</label>
             <input type="color" id="uiTextColorInput" value="#4a4a4a">
@@ -714,8 +929,6 @@ button:disabled {
             <label>Container Opacity</label>
             <input type="range" id="containerOpacityInput" min="0" max="1" step="0.05" value="0.7">
         </div>
-
-        <!-- Border Customization -->
         <div class="setting-item">
             <label>Container Border Color</label>
             <input type="color" id="containerBorderColorInput" value="#ff9ebb">
@@ -727,8 +940,6 @@ button:disabled {
                 <option value="dotted">Dotted</option>
                 <option value="solid">Solid</option>
                 <option value="double">Double</option>
-                <option value="groove">Groove</option>
-                <option value="ridge">Ridge</option>
                 <option value="none">None</option>
             </select>
         </div>
@@ -736,25 +947,13 @@ button:disabled {
             <label>Container Border Width (<span id="borderWidthVal">2px</span>)</label>
             <input type="range" id="containerBorderWidthInput" min="0" max="10" step="1" value="2">
         </div>
-
         <div class="setting-item">
             <label>Page Background Color</label>
             <input type="color" id="bgColorInput" value="#ffeef4">
         </div>
-
-        <!-- Glass & Background Image Adjustments -->
         <div class="setting-item">
             <label>Container Backdrop Blur (<span id="blurVal">20px</span>)</label>
             <input type="range" id="blurInput" min="0" max="40" value="20">
-        </div>
-        <div class="setting-item">
-            <label>Background Image URL</label>
-            <input type="text" id="bgImageInput" placeholder="https://example.com/image.jpg">
-        </div>
-
-        <div class="setting-item">
-            <label>Background Image Blur (<span id="bgBlurVal">0px</span>)</label>
-            <input type="range" id="bgBlurInput" min="0" max="30" step="1" value="0">
         </div>
     </div>
 </div>
@@ -774,10 +973,234 @@ const albumCoverFallback = document.getElementById("albumCoverFallback");
 const trackTitle = document.getElementById("trackTitle");
 const trackArtist = document.getElementById("trackArtist");
 
+const animPresetDropdown = document.getElementById("animPresetDropdown");
+const bgVideo = document.getElementById("bgVideo");
+
 let lyrics = [];
 let currentActiveIndex = -1;
+let currentScrollBehavior = "smooth";
 
-// --- UNDO / REDO HISTORY SYSTEM ---
+// --- WEB AUDIO API DSP PIPELINE (Reverb & Equalizer) ---
+let audioCtx = null;
+let audioSourceNode = null;
+let lowFilter = null;
+let midFilter = null;
+let highFilter = null;
+let convolverNode = null;
+let wetGainNode = null;
+let dryGainNode = null;
+
+function initAudioDSP() {
+    if (audioCtx) return;
+    
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+
+    audioSourceNode = audioCtx.createMediaElementSource(audio);
+
+    // 3-Band Equalizer Nodes
+    lowFilter = audioCtx.createBiquadFilter();
+    lowFilter.type = "lowshelf";
+    lowFilter.frequency.value = 320;
+
+    midFilter = audioCtx.createBiquadFilter();
+    midFilter.type = "peaking";
+    midFilter.frequency.value = 1000;
+    midFilter.Q.value = 0.5;
+
+    highFilter = audioCtx.createBiquadFilter();
+    highFilter.type = "highshelf";
+    highFilter.frequency.value = 3200;
+
+    // Reverb Convolver setup
+    convolverNode = audioCtx.createConvolver();
+    convolverNode.buffer = createImpulseResponse(audioCtx, 2.5, 2.0);
+
+    wetGainNode = audioCtx.createGain();
+    dryGainNode = audioCtx.createGain();
+    
+    wetGainNode.gain.value = 0; // default 0 wet
+    dryGainNode.gain.value = 1; // default 1 dry
+
+    // Routing: Source -> Low -> Mid -> High
+    audioSourceNode.connect(lowFilter);
+    lowFilter.connect(midFilter);
+    midFilter.connect(highFilter);
+
+    // High -> Dry Path -> Destination
+    highFilter.connect(dryGainNode);
+    dryGainNode.connect(audioCtx.destination);
+
+    // High -> Reverb Wet Path -> Destination
+    highFilter.connect(convolverNode);
+    convolverNode.connect(wetGainNode);
+    wetGainNode.connect(audioCtx.destination);
+}
+
+// Generate algorithmic Reverb Impulse Response
+function createImpulseResponse(ctx, duration, decay) {
+    const sampleRate = ctx.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = ctx.createBuffer(2, length, sampleRate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+
+    for (let i = 0; i < length; i++) {
+        const n = i;
+        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+    }
+    return impulse;
+}
+
+// Playback Speed & Pitch Control
+const speedInput = document.getElementById("speedInput");
+const preservePitchToggle = document.getElementById("preservePitchToggle");
+
+speedInput.addEventListener("input", (e) => {
+    const speed = parseFloat(e.target.value);
+    audio.playbackRate = speed;
+    document.getElementById("speedVal").textContent = speed.toFixed(2) + "x";
+});
+
+preservePitchToggle.addEventListener("change", (e) => {
+    const preserve = e.target.checked;
+    audio.preservesPitch = preserve;
+    audio.webkitPreservesPitch = preserve;
+    audio.mozPreservesPitch = preserve;
+});
+
+// Reverb Control
+document.getElementById("reverbInput").addEventListener("input", (e) => {
+    initAudioDSP();
+    const wetVal = parseFloat(e.target.value);
+    wetGainNode.gain.value = wetVal;
+    dryGainNode.gain.value = 1 - (wetVal * 0.3); // Maintain overall loudness balance
+    document.getElementById("reverbVal").textContent = Math.round(wetVal * 100) + "%";
+});
+
+// Equalizer Control
+document.getElementById("eqPresetDropdown").addEventListener("change", (e) => {
+    initAudioDSP();
+    const mode = e.target.value;
+
+    switch (mode) {
+        case "vocal":
+            lowFilter.gain.value = -3;
+            midFilter.gain.value = 5;
+            highFilter.gain.value = 2;
+            break;
+        case "bass":
+            lowFilter.gain.value = 8;
+            midFilter.gain.value = -1;
+            highFilter.gain.value = -2;
+            break;
+        case "lofi":
+            lowFilter.gain.value = 4;
+            midFilter.gain.value = 2;
+            highFilter.gain.value = -9;
+            break;
+        case "acoustic":
+            lowFilter.gain.value = 2;
+            midFilter.gain.value = 1;
+            highFilter.gain.value = 6;
+            break;
+        default: // Flat
+            lowFilter.gain.value = 0;
+            midFilter.gain.value = 0;
+            highFilter.gain.value = 0;
+            break;
+    }
+});
+
+// Video Background Upload Handler
+document.getElementById("bgVideoInput").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const url = URL.createObjectURL(file);
+        bgVideo.src = url;
+        bgVideo.style.display = "block";
+        bgVideo.play();
+        saveHistoryState();
+    }
+});
+
+// Animation Preset Selector & Scroll Customizer
+animPresetDropdown.addEventListener("change", (e) => {
+    const preset = e.target.value;
+    lyricsBox.className = "lyrics " + preset;
+    
+    // Set scroll smoothness per preset
+    if (preset === "anim-snap") {
+        currentScrollBehavior = "instant";
+    } else {
+        currentScrollBehavior = "smooth";
+    }
+    saveHistoryState();
+});
+
+// Typography Customizers
+document.getElementById("fontSizeInput").addEventListener("input", (e) => {
+    const val = e.target.value + "px";
+    root.style.setProperty('--lyric-font-size', val);
+    document.getElementById("fontSizeVal").textContent = val;
+});
+document.getElementById("fontSizeInput").addEventListener("change", saveHistoryState);
+
+document.getElementById("fontWeightInput").addEventListener("input", (e) => {
+    const val = e.target.value;
+    root.style.setProperty('--lyric-font-weight', val);
+    document.getElementById("fontWeightVal").textContent = val;
+});
+document.getElementById("fontWeightInput").addEventListener("change", saveHistoryState);
+
+document.getElementById("letterSpacingInput").addEventListener("input", (e) => {
+    const val = e.target.value + "px";
+    root.style.setProperty('--lyric-letter-spacing', val);
+    document.getElementById("letterSpacingVal").textContent = val;
+});
+document.getElementById("letterSpacingInput").addEventListener("change", saveHistoryState);
+
+document.getElementById("lineHeightInput").addEventListener("input", (e) => {
+    const val = e.target.value;
+    root.style.setProperty('--lyric-line-height', val);
+    document.getElementById("lineHeightVal").textContent = val;
+});
+document.getElementById("lineHeightInput").addEventListener("change", saveHistoryState);
+
+// Metadata Dialog
+function openMetadataModal() {
+    document.getElementById("editTrackTitleInput").value = trackTitle.textContent;
+    document.getElementById("editTrackArtistInput").value = trackArtist.textContent;
+    document.getElementById("editCoverInput").value = "";
+    document.getElementById("metadataModal").classList.add("open");
+}
+
+function closeMetadataModal() {
+    document.getElementById("metadataModal").classList.remove("open");
+}
+
+function saveMetadataChanges() {
+    const newTitle = document.getElementById("editTrackTitleInput").value.trim();
+    const newArtist = document.getElementById("editTrackArtistInput").value.trim();
+    const coverFile = document.getElementById("editCoverInput").files[0];
+
+    if (newTitle) trackTitle.textContent = newTitle;
+    if (newArtist) trackArtist.textContent = newArtist;
+
+    if (coverFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            albumCoverImg.src = e.target.result;
+            albumCoverImg.style.display = "block";
+            albumCoverFallback.style.display = "none";
+        };
+        reader.readAsDataURL(coverFile);
+    }
+    closeMetadataModal();
+}
+
+// History State System
 let historyStack = [];
 let historyIndex = -1;
 let isApplyingHistory = false;
@@ -841,9 +1264,12 @@ function hexToRgb(hex) {
 
 const builtInPresets = {
     pastelPink: {
+        animPreset: "anim-default",
         fontFamily: "Fredoka",
         fontSize: "26",
         fontWeight: "600",
+        letterSpacing: "0",
+        lineHeight: "1.5",
         uiTextColor: "#4a4a4a",
         activeColor: "#ff9ebb",
         activeOpacity: "1",
@@ -862,9 +1288,12 @@ const builtInPresets = {
         bgBlur: "0"
     },
     midnightBlue: {
+        animPreset: "anim-glow",
         fontFamily: "Poppins",
         fontSize: "26",
         fontWeight: "600",
+        letterSpacing: "0.5",
+        lineHeight: "1.5",
         uiTextColor: "#f1f5f9",
         activeColor: "#38bdf8",
         activeOpacity: "1",
@@ -883,9 +1312,12 @@ const builtInPresets = {
         bgBlur: "0"
     },
     matchaGreen: {
+        animPreset: "anim-slide",
         fontFamily: "Quicksand",
         fontSize: "26",
         fontWeight: "600",
+        letterSpacing: "0",
+        lineHeight: "1.5",
         uiTextColor: "#365314",
         activeColor: "#65a30d",
         activeOpacity: "1",
@@ -904,9 +1336,12 @@ const builtInPresets = {
         bgBlur: "0"
     },
     lavender: {
+        animPreset: "anim-fade",
         fontFamily: "Comfortaa",
         fontSize: "26",
         fontWeight: "700",
+        letterSpacing: "0",
+        lineHeight: "1.6",
         uiTextColor: "#3b0764",
         activeColor: "#a855f7",
         activeOpacity: "1",
@@ -936,8 +1371,7 @@ document.getElementById("musicUpload").addEventListener("change", function(e) {
         audio.src = URL.createObjectURL(file);
         playBtn.textContent = "▶";
 
-        const defaultTitle = file.name.replace(/\.[^/.]+$/, "");
-        trackTitle.textContent = defaultTitle;
+        trackTitle.textContent = file.name.replace(/\.[^/.]+$/, "");
         trackArtist.textContent = "Unknown Artist";
 
         if (window.jsmediatags) {
@@ -953,13 +1387,10 @@ document.getElementById("musicUpload").addEventListener("change", function(e) {
                         for (let i = 0; i < picture.data.length; i++) {
                             base64String += String.fromCharCode(picture.data[i]);
                         }
-                        const base64 = "data:" + picture.format + ";base64," + window.btoa(base64String);
-                        albumCoverImg.src = base64;
+                        albumCoverImg.src = "data:" + picture.format + ";base64," + window.btoa(base64String);
                         albumCoverImg.style.display = "block";
                         albumCoverFallback.style.display = "none";
-                    } else {
-                        resetAlbumCover();
-                    }
+                    } else { resetAlbumCover(); }
                 },
                 onError: function() { resetAlbumCover(); }
             });
@@ -989,6 +1420,12 @@ function loadManualLyrics() {
 
 function togglePlay() {
     if (!audio.src) return;
+    
+    // Ensure Web Audio context is un-suspended on user click
+    if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
     if (audio.paused) {
         audio.play();
         playBtn.textContent = "❚❚";
@@ -1054,10 +1491,8 @@ function parseAndLoadLyrics(text) {
             if (msStr.length === 2) msStr += "0";
             const milliseconds = parseInt(msStr, 10);
 
-            const totalTime = (minutes * 60) + seconds + (milliseconds / 1000);
-
             lyrics.push({
-                time: totalTime,
+                time: (minutes * 60) + seconds + (milliseconds / 1000),
                 text: match[4].trim()
             });
         }
@@ -1114,7 +1549,7 @@ function updateLyrics() {
             if (index === activeIndex) {
                 element.classList.add("active");
                 element.scrollIntoView({
-                    behavior: "smooth",
+                    behavior: currentScrollBehavior,
                     block: "center"
                 });
             }
@@ -1151,10 +1586,9 @@ function applyCustomFont() {
     const fontName = document.getElementById("customFontInput").value.trim();
     if (!fontName) return;
 
-    const formattedFontName = fontName.replace(/\s+/g, '+');
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = `https://fonts.googleapis.com/css2?family=${formattedFontName}:wght@400;600;700;900&display=swap`;
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@100;400;600;700;900&display=swap`;
     
     link.onload = () => {
         root.style.setProperty('--lyric-font-family', `'${fontName}', sans-serif`);
@@ -1162,18 +1596,6 @@ function applyCustomFont() {
     };
     document.head.appendChild(link);
 }
-
-document.getElementById("fontSizeInput").addEventListener("input", (e) => {
-    const val = e.target.value + "px";
-    root.style.setProperty('--lyric-font-size', val);
-    document.getElementById("fontSizeVal").textContent = val;
-});
-document.getElementById("fontSizeInput").addEventListener("change", saveHistoryState);
-
-document.getElementById("fontWeightInput").addEventListener("change", (e) => {
-    root.style.setProperty('--lyric-font-weight', e.target.value);
-    saveHistoryState();
-});
 
 document.getElementById("uiTextColorInput").addEventListener("input", (e) => root.style.setProperty('--ui-text-color', e.target.value));
 document.getElementById("uiTextColorInput").addEventListener("change", saveHistoryState);
@@ -1251,10 +1673,13 @@ document.getElementById("bgBlurInput").addEventListener("change", saveHistorySta
 
 function getCurrentPresetData() {
     return {
+        animPreset: animPresetDropdown.value,
         fontFamily: fontDropdown.value === "CUSTOM" ? document.getElementById("customFontInput").value : fontDropdown.value,
         isCustomFont: fontDropdown.value === "CUSTOM",
         fontSize: document.getElementById("fontSizeInput").value,
         fontWeight: document.getElementById("fontWeightInput").value,
+        letterSpacing: document.getElementById("letterSpacingInput").value,
+        lineHeight: document.getElementById("lineHeightInput").value,
         uiTextColor: document.getElementById("uiTextColorInput").value,
         activeColor: document.getElementById("activeColorInput").value,
         activeOpacity: document.getElementById("activeOpacityInput").value,
@@ -1304,6 +1729,11 @@ document.getElementById("presetFileInput").addEventListener("change", function(e
 });
 
 function applyPreset(p) {
+    if (p.animPreset) {
+        animPresetDropdown.value = p.animPreset;
+        lyricsBox.className = "lyrics " + p.animPreset;
+        currentScrollBehavior = p.animPreset === "anim-snap" ? "instant" : "smooth";
+    }
     if (p.fontSize) {
         document.getElementById("fontSizeInput").value = p.fontSize;
         root.style.setProperty('--lyric-font-size', p.fontSize + "px");
@@ -1312,6 +1742,17 @@ function applyPreset(p) {
     if (p.fontWeight) {
         document.getElementById("fontWeightInput").value = p.fontWeight;
         root.style.setProperty('--lyric-font-weight', p.fontWeight);
+        document.getElementById("fontWeightVal").textContent = p.fontWeight;
+    }
+    if (p.letterSpacing !== undefined) {
+        document.getElementById("letterSpacingInput").value = p.letterSpacing;
+        root.style.setProperty('--lyric-letter-spacing', p.letterSpacing + "px");
+        document.getElementById("letterSpacingVal").textContent = p.letterSpacing + "px";
+    }
+    if (p.lineHeight !== undefined) {
+        document.getElementById("lineHeightInput").value = p.lineHeight;
+        root.style.setProperty('--lyric-line-height', p.lineHeight);
+        document.getElementById("lineHeightVal").textContent = p.lineHeight;
     }
     if (p.uiTextColor) {
         document.getElementById("uiTextColorInput").value = p.uiTextColor;
