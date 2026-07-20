@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Synced Lyrics Player</title>
 
+<!-- Dynamic Favicon Tag -->
+<link id="dynamicFavicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+
 <!-- Preload Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +107,7 @@ body::before {
     display: flex;
     flex-direction: column;
     transition: all 0.4s ease;
+    overflow: hidden;
 }
 
 .top-actions {
@@ -123,10 +127,11 @@ body::before {
 
 h1 { 
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     font-size: 26px;
     color: var(--ui-text-color);
     letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
 .input-section {
@@ -138,6 +143,7 @@ h1 {
     border-radius: 20px;
     border: var(--container-border-width) var(--container-border-style) var(--container-border-color);
     text-align: left;
+    flex-shrink: 0;
 }
 
 .upload-row {
@@ -183,7 +189,7 @@ input[type="file"]::file-selector-button {
 
 textarea.lyrics-textarea {
     width: 100%;
-    height: 55px;
+    height: 48px;
     border: 1px solid var(--container-border-color);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.9);
@@ -224,12 +230,13 @@ button:hover {
 }
 
 .lyrics {
-    height: 260px;
+    min-height: 140px;
+    flex-grow: 1;
     overflow-y: auto;
     position: relative;
-    padding: 110px 0;
-    flex-grow: 1;
+    padding: 80px 0;
     margin-top: 10px;
+    margin-bottom: 5px;
 }
 
 .lyrics::-webkit-scrollbar { display: none; }
@@ -248,8 +255,6 @@ button:hover {
 }
 
 /* --- ANIMATION PRESETS & DISTINCT STYLES --- */
-
-/* Preset 1: Default (Pop & Scale) */
 .anim-default .line {
     transform: scale(0.92);
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s, opacity 0.3s;
@@ -261,7 +266,6 @@ button:hover {
     transform: scale(1.15);
 }
 
-/* Preset 2: Glow / Neon Pulse */
 .anim-glow .line {
     transform: scale(0.95);
     transition: all 0.4s ease;
@@ -274,7 +278,6 @@ button:hover {
     text-shadow: 0 0 12px var(--lyric-active-color), 0 0 24px var(--lyric-active-color);
 }
 
-/* Preset 3: Fade In / Out */
 .anim-fade .line {
     transform: none;
     transition: opacity 0.8s ease-in-out, color 0.8s ease-in-out;
@@ -286,7 +289,6 @@ button:hover {
     font-weight: var(--lyric-font-weight);
 }
 
-/* Preset 4: Snap / Cut (Instant step) */
 .anim-snap .line {
     transform: none !important;
     transition: none !important;
@@ -297,7 +299,6 @@ button:hover {
     font-weight: var(--lyric-font-weight) !important;
 }
 
-/* Preset 5: Slide-In Kinetic */
 .anim-slide .line {
     transform: translateX(-30px);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, color 0.3s;
@@ -309,7 +310,6 @@ button:hover {
     transform: translateX(0) scale(1.05);
 }
 
-/* Preset 6: Scroll Without Scaling */
 .anim-noscale .line {
     transform: none;
     transition: color 0.3s ease, opacity 0.3s ease;
@@ -330,7 +330,7 @@ button:hover {
     border-radius: 50px;
     border: var(--container-border-width) var(--container-border-style) var(--container-border-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    margin-top: 10px;
+    flex-shrink: 0;
 }
 
 .track-meta-container {
@@ -501,25 +501,29 @@ button:hover {
     height: 100%;
 }
 
-/* Side Drawer Customization */
+/* Side Drawers Customization & Audio FX */
 .side-drawer {
     position: fixed;
     top: 0;
-    right: -380px;
-    width: 360px;
+    width: 370px;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(20px);
-    box-shadow: -10px 0 25px rgba(0,0,0,0.08);
+    box-shadow: 0 0 30px rgba(0,0,0,0.1);
     padding: 25px;
     z-index: 100;
-    transition: right 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
     text-align: left;
 }
 
-.side-drawer.open {
+/* Right Side Drawers */
+.right-drawer {
     right: 0;
+    transform: translateX(100%);
+}
+.right-drawer.open {
+    transform: translateX(0);
 }
 
 .drawer-header {
@@ -551,7 +555,7 @@ button:hover {
     border-top-width: var(--container-border-width);
     border-top-style: var(--container-border-style);
     border-top-color: var(--container-border-color);
-    margin: 12px 0;
+    margin: 14px 0;
 }
 
 .settings-grid {
@@ -617,6 +621,42 @@ button:hover {
     box-shadow: none;
 }
 
+/* EQ Sliders Box */
+.eq-container-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--container-border-color);
+}
+
+.eq-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+}
+
+.eq-row label {
+    width: 90px;
+    font-weight: 700;
+}
+
+.eq-row input[type="range"] {
+    flex-grow: 1;
+}
+
+.pan-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ui-text-color);
+    opacity: 0.8;
+}
+
 /* Modal Overlay */
 .modal-overlay {
     position: fixed;
@@ -664,6 +704,7 @@ button:hover {
 <div class="container" id="playerContainer">
     
     <div class="top-actions">
+        <button onclick="toggleAudioDrawer()">🎧 Audio FX</button>
         <button onclick="toggleMaximize()" id="maxBtn">Maximize</button>
         <button onclick="toggleSettings()">Customize</button>
     </div>
@@ -712,34 +753,135 @@ button:hover {
     </div>
 </div>
 
-<!-- Edit Metadata Modal -->
-<div class="modal-overlay" id="metadataModal">
-    <div class="modal-content">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">Edit Track Info</h3>
-            <button class="close-btn" onclick="closeMetadataModal()">✖</button>
-        </div>
+<!-- Dedicated Audio FX Side Drawer (Right Side) -->
+<div class="side-drawer right-drawer" id="audioDrawer">
+    <div class="drawer-header">
+        <h3>🎧 Audio Studio & DSP</h3>
+        <button class="close-btn" onclick="toggleAudioDrawer()">✖</button>
+    </div>
+
+    <div class="settings-grid">
+        
+        <!-- Extended Gain / Overdrive Volume -->
         <div class="setting-item">
-            <label>Track Name</label>
-            <input type="text" id="editTrackTitleInput" placeholder="Enter title...">
+            <label>Master Volume & Gain Boost (<span id="masterGainVal">100%</span>)</label>
+            <input type="range" id="masterGainInput" min="0" max="5" step="0.05" value="1.0">
+            <span style="font-size: 10px; opacity: 0.7; font-weight: 500;">Boost audio up to 500% beyond system defaults.</span>
         </div>
+
+        <!-- Playback Speed -->
         <div class="setting-item">
-            <label>Artist Name</label>
-            <input type="text" id="editTrackArtistInput" placeholder="Enter artist...">
+            <label>Playback Speed (<span id="speedVal">1.0x</span>)</label>
+            <input type="range" id="speedInput" min="0.25" max="4.0" step="0.05" value="1.0">
         </div>
+
+        <div class="setting-item row">
+            <label for="preservePitchToggle">Preserve Pitch on Speed Change</label>
+            <input type="checkbox" id="preservePitchToggle" checked style="accent-color: var(--btn-bg);">
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- Panning & 8D Spatial Controls -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">↔️ Stereo Pan & Spatial Sound</div>
+
         <div class="setting-item">
-            <label>Cover Art</label>
-            <input type="file" id="editCoverInput" accept="image/*">
+            <label>Stereo Balance Panner (<span id="panVal">Center</span>)</label>
+            <div class="pan-label-row">
+                <span>◄ LEFT</span>
+                <span>CENTER</span>
+                <span>RIGHT ►</span>
+            </div>
+            <input type="range" id="panSlider" min="-1" max="1" step="0.02" value="0">
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-            <button style="background: transparent; color: var(--ui-text-color); box-shadow: none;" onclick="closeMetadataModal()">Cancel</button>
-            <button onclick="saveMetadataChanges()">Save</button>
+
+        <div class="setting-item row">
+            <label for="eightDToggle">🎧 Enable 8D Spatial Auto-Panner</label>
+            <input type="checkbox" id="eightDToggle" style="accent-color: var(--btn-bg);">
         </div>
+
+        <div class="setting-item">
+            <label>8D Rotation Speed (<span id="eightDSpeedVal">2.0s</span>)</label>
+            <input type="range" id="eightDSpeedInput" min="0.2" max="10.0" step="0.2" value="2.0">
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- Acoustic Reverb Room Effects -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">🏰 Reverb & Atmosphere</div>
+
+        <div class="setting-item">
+            <label>Intense Reverb Wetness (<span id="reverbVal">0%</span>)</label>
+            <input type="range" id="reverbInput" min="0" max="3" step="0.05" value="0">
+        </div>
+
+        <div class="setting-item">
+            <label>Reverb Room Size / Decay</label>
+            <select id="reverbDecaySelect">
+                <option value="1.0">Small Room / Studio</option>
+                <option value="3.0" selected>Large Concert Hall</option>
+                <option value="6.0">Giant Cathedral</option>
+                <option value="12.0">Infinite Void</option>
+            </select>
+        </div>
+
+        <hr class="drawer-divider">
+
+        <!-- Presets & Vocal Limiter -->
+        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">🎛️ Equalizer & FX Presets</div>
+
+        <div class="setting-item">
+            <label>Audio Style Presets</label>
+            <select id="audioStylePresetDropdown">
+                <option value="normal" selected>Normal / Standard</option>
+                <option value="nightcore">⚡ Nightcore (Fast & High Pitch)</option>
+                <option value="daycore">🌙 Slowed + Reverb (Daycore)</option>
+                <option value="vaporwave">🌆 Vaporwave (Retro Slow)</option>
+                <option value="8d">🎧 Extreme 8D Surround</option>
+            </select>
+        </div>
+
+        <div class="setting-item row">
+            <label for="compressorToggle">🎛️ Dynamic Vocal Limiter / AGC</label>
+            <input type="checkbox" id="compressorToggle" style="accent-color: var(--btn-bg);">
+        </div>
+
+        <div class="setting-item">
+            <label>Equalizer Presets</label>
+            <select id="eqPresetDropdown">
+                <option value="flat" selected>Flat / Normal</option>
+                <option value="vocal">Vocal Boost</option>
+                <option value="bass">Extreme Bass Punch</option>
+                <option value="lofi">Lo-Fi Warmth</option>
+                <option value="acoustic">Acoustic Clarity</option>
+            </select>
+        </div>
+
+        <!-- Live 3-Band Parametric EQ Sliders (-24dB to +24dB) -->
+        <div class="eq-container-box">
+            <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">🎛️ Live EQ Adjustment</div>
+            <div class="eq-row">
+                <label>Bass (320Hz):</label>
+                <input type="range" id="eqLowSlider" min="-24" max="24" value="0" step="0.5">
+                <span id="eqLowVal" style="min-width: 40px; text-align: right;">0dB</span>
+            </div>
+            <div class="eq-row">
+                <label>Mid (1kHz):</label>
+                <input type="range" id="eqMidSlider" min="-24" max="24" value="0" step="0.5">
+                <span id="eqMidVal" style="min-width: 40px; text-align: right;">0dB</span>
+            </div>
+            <div class="eq-row">
+                <label>Treble (3.2kHz):</label>
+                <input type="range" id="eqHighSlider" min="-24" max="24" value="0" step="0.5">
+                <span id="eqHighVal" style="min-width: 40px; text-align: right;">0dB</span>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- Side Drawer Customization -->
-<div class="side-drawer" id="sideDrawer">
+<!-- Side Drawer Customization (Right Side) -->
+<div class="side-drawer right-drawer" id="sideDrawer">
     <div class="drawer-header">
         <h3>Customization</h3>
         <button class="close-btn" onclick="toggleSettings()">✖</button>
@@ -753,37 +895,6 @@ button:hover {
                 <button id="undoBtn" onclick="undoTheme()" disabled>↩ Undo</button>
                 <button id="redoBtn" onclick="redoTheme()" disabled>↪ Redo</button>
             </div>
-        </div>
-
-        <hr class="drawer-divider">
-
-        <!-- AUDIO PROCESSING DSP SECTION -->
-        <div style="font-size: 13px; font-weight: 700; color: var(--ui-text-color);">🎧 Audio DSP Controls</div>
-
-        <div class="setting-item">
-            <label>Playback Speed (<span id="speedVal">1.0x</span>)</label>
-            <input type="range" id="speedInput" min="0.5" max="2.0" step="0.05" value="1.0">
-        </div>
-
-        <div class="setting-item row">
-            <label for="preservePitchToggle">Preserve Pitch with Speed</label>
-            <input type="checkbox" id="preservePitchToggle" checked style="accent-color: var(--btn-bg);">
-        </div>
-
-        <div class="setting-item">
-            <label>Reverb Intensity (<span id="reverbVal">0%</span>)</label>
-            <input type="range" id="reverbInput" min="0" max="1" step="0.05" value="0">
-        </div>
-
-        <div class="setting-item">
-            <label>Equalizer Preset</label>
-            <select id="eqPresetDropdown">
-                <option value="flat" selected>Flat / Normal</option>
-                <option value="vocal">Vocal Boost</option>
-                <option value="bass">Bass Punch</option>
-                <option value="lofi">Lo-Fi Warmth</option>
-                <option value="acoustic">Acoustic Clarity</option>
-            </select>
         </div>
 
         <hr class="drawer-divider">
@@ -958,6 +1069,32 @@ button:hover {
     </div>
 </div>
 
+<!-- Edit Metadata Modal -->
+<div class="modal-overlay" id="metadataModal">
+    <div class="modal-content">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Edit Track Info</h3>
+            <button class="close-btn" onclick="closeMetadataModal()">✖</button>
+        </div>
+        <div class="setting-item">
+            <label>Track Name</label>
+            <input type="text" id="editTrackTitleInput" placeholder="Enter title...">
+        </div>
+        <div class="setting-item">
+            <label>Artist Name</label>
+            <input type="text" id="editTrackArtistInput" placeholder="Enter artist...">
+        </div>
+        <div class="setting-item">
+            <label>Cover Art</label>
+            <input type="file" id="editCoverInput" accept="image/*">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button style="background: transparent; color: var(--ui-text-color); box-shadow: none;" onclick="closeMetadataModal()">Cancel</button>
+            <button onclick="saveMetadataChanges()">Save</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const audio = document.getElementById("audio");
 const lyricsBox = document.getElementById("lyrics");
@@ -972,23 +1109,35 @@ const albumCoverImg = document.getElementById("albumCoverImg");
 const albumCoverFallback = document.getElementById("albumCoverFallback");
 const trackTitle = document.getElementById("trackTitle");
 const trackArtist = document.getElementById("trackArtist");
-
-const animPresetDropdown = document.getElementById("animPresetDropdown");
-const bgVideo = document.getElementById("bgVideo");
+const dynamicFavicon = document.getElementById("dynamicFavicon");
 
 let lyrics = [];
 let currentActiveIndex = -1;
 let currentScrollBehavior = "smooth";
 
-// --- WEB AUDIO API DSP PIPELINE (Reverb & Equalizer) ---
+function updateFavicon(imageUrl) {
+    if (imageUrl) {
+        dynamicFavicon.href = imageUrl;
+    } else {
+        dynamicFavicon.href = "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>";
+    }
+}
+
+// --- WEB AUDIO API DSP PIPELINE ---
 let audioCtx = null;
 let audioSourceNode = null;
+let masterGainNode = null;
 let lowFilter = null;
 let midFilter = null;
 let highFilter = null;
 let convolverNode = null;
 let wetGainNode = null;
 let dryGainNode = null;
+let pannerNode = null;
+let compressorNode = null;
+
+let pannerAngle = 0;
+let pannerInterval = null;
 
 function initAudioDSP() {
     if (audioCtx) return;
@@ -998,7 +1147,19 @@ function initAudioDSP() {
 
     audioSourceNode = audioCtx.createMediaElementSource(audio);
 
-    // 3-Band Equalizer Nodes
+    // Master Gain Node for Overdrive (>100% - 500% Volume Boost)
+    masterGainNode = audioCtx.createGain();
+    masterGainNode.gain.value = parseFloat(document.getElementById("masterGainInput").value);
+
+    // Dynamic Compressor / Limiter Node
+    compressorNode = audioCtx.createDynamicsCompressor();
+    compressorNode.threshold.value = -24;
+    compressorNode.knee.value = 30;
+    compressorNode.ratio.value = 12;
+    compressorNode.attack.value = 0.003;
+    compressorNode.release.value = 0.25;
+
+    // 3-Band Parametric Equalizer Nodes
     lowFilter = audioCtx.createBiquadFilter();
     lowFilter.type = "lowshelf";
     lowFilter.frequency.value = 320;
@@ -1014,30 +1175,45 @@ function initAudioDSP() {
 
     // Reverb Convolver setup
     convolverNode = audioCtx.createConvolver();
-    convolverNode.buffer = createImpulseResponse(audioCtx, 2.5, 2.0);
+    updateReverbDecay(parseFloat(document.getElementById("reverbDecaySelect").value));
 
     wetGainNode = audioCtx.createGain();
     dryGainNode = audioCtx.createGain();
     
-    wetGainNode.gain.value = 0; // default 0 wet
-    dryGainNode.gain.value = 1; // default 1 dry
+    wetGainNode.gain.value = 0;
+    dryGainNode.gain.value = 1;
 
-    // Routing: Source -> Low -> Mid -> High
-    audioSourceNode.connect(lowFilter);
+    // Stereo Panner Node for Left-Right Balance & 8D Auto Pan
+    if (audioCtx.createStereoPanner) {
+        pannerNode = audioCtx.createStereoPanner();
+    }
+
+    // Connect Node Pipeline: AudioSource -> MasterGain -> Low -> Mid -> High -> Panner -> (Compressor) -> Outputs
+    audioSourceNode.connect(masterGainNode);
+    masterGainNode.connect(lowFilter);
     lowFilter.connect(midFilter);
     midFilter.connect(highFilter);
 
-    // High -> Dry Path -> Destination
-    highFilter.connect(dryGainNode);
-    dryGainNode.connect(audioCtx.destination);
+    let lastEqNode = highFilter;
 
-    // High -> Reverb Wet Path -> Destination
-    highFilter.connect(convolverNode);
+    if (pannerNode) {
+        lastEqNode.connect(pannerNode);
+        lastEqNode = pannerNode;
+    }
+
+    lastEqNode.connect(dryGainNode);
+    lastEqNode.connect(convolverNode);
+
+    dryGainNode.connect(audioCtx.destination);
     convolverNode.connect(wetGainNode);
     wetGainNode.connect(audioCtx.destination);
 }
 
-// Generate algorithmic Reverb Impulse Response
+function updateReverbDecay(decayTime) {
+    if (!audioCtx) return;
+    convolverNode.buffer = createImpulseResponse(audioCtx, decayTime, decayTime);
+}
+
 function createImpulseResponse(ctx, duration, decay) {
     const sampleRate = ctx.sampleRate;
     const length = sampleRate * duration;
@@ -1053,7 +1229,15 @@ function createImpulseResponse(ctx, duration, decay) {
     return impulse;
 }
 
-// Playback Speed & Pitch Control
+// Master Gain Boost Input Slider (>100% to 500%)
+document.getElementById("masterGainInput").addEventListener("input", (e) => {
+    initAudioDSP();
+    const gainVal = parseFloat(e.target.value);
+    if (masterGainNode) masterGainNode.gain.value = gainVal;
+    document.getElementById("masterGainVal").textContent = Math.round(gainVal * 100) + "%";
+});
+
+// Speed Controls (up to 4x)
 const speedInput = document.getElementById("speedInput");
 const preservePitchToggle = document.getElementById("preservePitchToggle");
 
@@ -1070,50 +1254,181 @@ preservePitchToggle.addEventListener("change", (e) => {
     audio.mozPreservesPitch = preserve;
 });
 
-// Reverb Control
+// Reverb Control & Decay Size
 document.getElementById("reverbInput").addEventListener("input", (e) => {
     initAudioDSP();
     const wetVal = parseFloat(e.target.value);
     wetGainNode.gain.value = wetVal;
-    dryGainNode.gain.value = 1 - (wetVal * 0.3); // Maintain overall loudness balance
+    dryGainNode.gain.value = Math.max(0.1, 1 - (wetVal * 0.3));
     document.getElementById("reverbVal").textContent = Math.round(wetVal * 100) + "%";
 });
 
-// Equalizer Control
-document.getElementById("eqPresetDropdown").addEventListener("change", (e) => {
+document.getElementById("reverbDecaySelect").addEventListener("change", (e) => {
     initAudioDSP();
-    const mode = e.target.value;
+    updateReverbDecay(parseFloat(e.target.value));
+});
 
-    switch (mode) {
-        case "vocal":
-            lowFilter.gain.value = -3;
-            midFilter.gain.value = 5;
-            highFilter.gain.value = 2;
-            break;
-        case "bass":
-            lowFilter.gain.value = 8;
-            midFilter.gain.value = -1;
-            highFilter.gain.value = -2;
-            break;
-        case "lofi":
-            lowFilter.gain.value = 4;
-            midFilter.gain.value = 2;
-            highFilter.gain.value = -9;
-            break;
-        case "acoustic":
-            lowFilter.gain.value = 2;
-            midFilter.gain.value = 1;
-            highFilter.gain.value = 6;
-            break;
-        default: // Flat
-            lowFilter.gain.value = 0;
-            midFilter.gain.value = 0;
-            highFilter.gain.value = 0;
-            break;
+// Customizable Left-Right Panner & 8D Auto Panner
+const panSlider = document.getElementById("panSlider");
+const eightDToggle = document.getElementById("eightDToggle");
+const eightDSpeedInput = document.getElementById("eightDSpeedInput");
+
+function updatePanDisplay(val) {
+    let txt = "Center";
+    if (val < -0.05) txt = `${Math.round(Math.abs(val) * 100)}% Left`;
+    else if (val > 0.05) txt = `${Math.round(val * 100)}% Right`;
+    document.getElementById("panVal").textContent = txt;
+}
+
+panSlider.addEventListener("input", (e) => {
+    initAudioDSP();
+    if (!pannerNode || eightDToggle.checked) return;
+    const val = parseFloat(e.target.value);
+    pannerNode.pan.value = val;
+    updatePanDisplay(val);
+});
+
+eightDSpeedInput.addEventListener("input", (e) => {
+    document.getElementById("eightDSpeedVal").textContent = parseFloat(e.target.value).toFixed(1) + "s";
+    if (eightDToggle.checked) restartEightDPanner();
+});
+
+function restartEightDPanner() {
+    if (pannerInterval) clearInterval(pannerInterval);
+    const speedSec = parseFloat(eightDSpeedInput.value);
+    const intervalMs = 30;
+    const step = (Math.PI * 2) / ((speedSec * 1000) / intervalMs);
+
+    pannerInterval = setInterval(() => {
+        pannerAngle += step;
+        const currentPan = Math.sin(pannerAngle);
+        pannerNode.pan.value = currentPan;
+        updatePanDisplay(currentPan);
+    }, intervalMs);
+}
+
+eightDToggle.addEventListener("change", (e) => {
+    initAudioDSP();
+    if (!pannerNode) return;
+
+    if (e.target.checked) {
+        restartEightDPanner();
+    } else {
+        if (pannerInterval) clearInterval(pannerInterval);
+        const manualVal = parseFloat(panSlider.value);
+        pannerNode.pan.value = manualVal;
+        updatePanDisplay(manualVal);
     }
 });
 
-// Video Background Upload Handler
+// Vocal Limiter / AGC
+document.getElementById("compressorToggle").addEventListener("change", (e) => {
+    initAudioDSP();
+    if (e.target.checked) {
+        highFilter.disconnect();
+        highFilter.connect(compressorNode);
+        if (pannerNode) compressorNode.connect(pannerNode);
+        else {
+            compressorNode.connect(dryGainNode);
+            compressorNode.connect(convolverNode);
+        }
+    } else {
+        highFilter.disconnect();
+        if (pannerNode) highFilter.connect(pannerNode);
+        else {
+            highFilter.connect(dryGainNode);
+            highFilter.connect(convolverNode);
+        }
+    }
+});
+
+// Audio Style Presets
+document.getElementById("audioStylePresetDropdown").addEventListener("change", (e) => {
+    initAudioDSP();
+    const style = e.target.value;
+    const reverbSlider = document.getElementById("reverbInput");
+
+    switch (style) {
+        case "nightcore":
+            speedInput.value = 1.25;
+            preservePitchToggle.checked = false;
+            reverbSlider.value = 0.15;
+            eightDToggle.checked = false;
+            setEqValues(-2, 3, 8);
+            break;
+        case "daycore":
+            speedInput.value = 0.82;
+            preservePitchToggle.checked = false;
+            reverbSlider.value = 1.0;
+            eightDToggle.checked = false;
+            setEqValues(8, 2, -4);
+            break;
+        case "vaporwave":
+            speedInput.value = 0.72;
+            preservePitchToggle.checked = false;
+            reverbSlider.value = 1.5;
+            eightDToggle.checked = false;
+            setEqValues(6, -4, -10);
+            break;
+        case "8d":
+            speedInput.value = 1.0;
+            preservePitchToggle.checked = true;
+            reverbSlider.value = 0.7;
+            eightDToggle.checked = true;
+            setEqValues(4, 0, 5);
+            break;
+        default:
+            speedInput.value = 1.0;
+            preservePitchToggle.checked = true;
+            reverbSlider.value = 0;
+            eightDToggle.checked = false;
+            setEqValues(0, 0, 0);
+            break;
+    }
+
+    speedInput.dispatchEvent(new Event('input'));
+    preservePitchToggle.dispatchEvent(new Event('change'));
+    reverbSlider.dispatchEvent(new Event('input'));
+    eightDToggle.dispatchEvent(new Event('change'));
+});
+
+// Equalizer Sliders (-24dB to +24dB)
+const eqLowSlider = document.getElementById("eqLowSlider");
+const eqMidSlider = document.getElementById("eqMidSlider");
+const eqHighSlider = document.getElementById("eqHighSlider");
+
+function setEqValues(low, mid, high) {
+    initAudioDSP();
+    eqLowSlider.value = low;
+    eqMidSlider.value = mid;
+    eqHighSlider.value = high;
+    
+    document.getElementById("eqLowVal").textContent = low + "dB";
+    document.getElementById("eqMidVal").textContent = mid + "dB";
+    document.getElementById("eqHighVal").textContent = high + "dB";
+
+    if (lowFilter) lowFilter.gain.value = low;
+    if (midFilter) midFilter.gain.value = mid;
+    if (highFilter) highFilter.gain.value = high;
+}
+
+eqLowSlider.addEventListener("input", (e) => setEqValues(parseFloat(e.target.value), parseFloat(eqMidSlider.value), parseFloat(eqHighSlider.value)));
+eqMidSlider.addEventListener("input", (e) => setEqValues(parseFloat(eqLowSlider.value), parseFloat(e.target.value), parseFloat(eqHighSlider.value)));
+eqHighSlider.addEventListener("input", (e) => setEqValues(parseFloat(eqLowSlider.value), parseFloat(eqMidSlider.value), parseFloat(e.target.value)));
+
+document.getElementById("eqPresetDropdown").addEventListener("change", (e) => {
+    const mode = e.target.value;
+
+    switch (mode) {
+        case "vocal": setEqValues(-4, 8, 4); break;
+        case "bass": setEqValues(16, -2, -4); break;
+        case "lofi": setEqValues(6, 4, -16); break;
+        case "acoustic": setEqValues(3, 2, 10); break;
+        default: setEqValues(0, 0, 0); break;
+    }
+});
+
+// Background Video Upload
 document.getElementById("bgVideoInput").addEventListener("change", function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -1125,12 +1440,11 @@ document.getElementById("bgVideoInput").addEventListener("change", function(e) {
     }
 });
 
-// Animation Preset Selector & Scroll Customizer
+// Animation Preset Selector
 animPresetDropdown.addEventListener("change", (e) => {
     const preset = e.target.value;
     lyricsBox.className = "lyrics " + preset;
     
-    // Set scroll smoothness per preset
     if (preset === "anim-snap") {
         currentScrollBehavior = "instant";
     } else {
@@ -1139,7 +1453,7 @@ animPresetDropdown.addEventListener("change", (e) => {
     saveHistoryState();
 });
 
-// Typography Customizers
+// Typography Controls
 document.getElementById("fontSizeInput").addEventListener("input", (e) => {
     const val = e.target.value + "px";
     root.style.setProperty('--lyric-font-size', val);
@@ -1168,6 +1482,24 @@ document.getElementById("lineHeightInput").addEventListener("input", (e) => {
 });
 document.getElementById("lineHeightInput").addEventListener("change", saveHistoryState);
 
+// Drawer Toggles (Closes the other drawer if opened)
+function toggleAudioDrawer() {
+    document.getElementById("sideDrawer").classList.remove("open");
+    document.getElementById("audioDrawer").classList.toggle("open");
+}
+
+function toggleSettings() {
+    document.getElementById("audioDrawer").classList.remove("open");
+    document.getElementById("sideDrawer").classList.toggle("open");
+}
+
+function toggleMaximize() {
+    const container = document.getElementById("playerContainer");
+    const maxBtn = document.getElementById("maxBtn");
+    container.classList.toggle("maximized");
+    maxBtn.textContent = container.classList.contains("maximized") ? "Restore" : "Maximize";
+}
+
 // Metadata Dialog
 function openMetadataModal() {
     document.getElementById("editTrackTitleInput").value = trackTitle.textContent;
@@ -1191,16 +1523,18 @@ function saveMetadataChanges() {
     if (coverFile) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            albumCoverImg.src = e.target.result;
+            const coverDataUrl = e.target.result;
+            albumCoverImg.src = coverDataUrl;
             albumCoverImg.style.display = "block";
             albumCoverFallback.style.display = "none";
+            updateFavicon(coverDataUrl);
         };
         reader.readAsDataURL(coverFile);
     }
     closeMetadataModal();
 }
 
-// History State System
+// History System
 let historyStack = [];
 let historyIndex = -1;
 let isApplyingHistory = false;
@@ -1387,14 +1721,22 @@ document.getElementById("musicUpload").addEventListener("change", function(e) {
                         for (let i = 0; i < picture.data.length; i++) {
                             base64String += String.fromCharCode(picture.data[i]);
                         }
-                        albumCoverImg.src = "data:" + picture.format + ";base64," + window.btoa(base64String);
+                        const coverUrl = "data:" + picture.format + ";base64," + window.btoa(base64String);
+                        albumCoverImg.src = coverUrl;
                         albumCoverImg.style.display = "block";
                         albumCoverFallback.style.display = "none";
-                    } else { resetAlbumCover(); }
+                        updateFavicon(coverUrl);
+                    } else { 
+                        resetAlbumCover(); 
+                    }
                 },
-                onError: function() { resetAlbumCover(); }
+                onError: function() { 
+                    resetAlbumCover(); 
+                }
             });
-        } else { resetAlbumCover(); }
+        } else { 
+            resetAlbumCover(); 
+        }
     }
 });
 
@@ -1402,6 +1744,7 @@ function resetAlbumCover() {
     albumCoverImg.src = "";
     albumCoverImg.style.display = "none";
     albumCoverFallback.style.display = "block";
+    updateFavicon(null);
 }
 
 document.getElementById("lrcUpload").addEventListener("change", function(e) {
@@ -1421,7 +1764,6 @@ function loadManualLyrics() {
 function togglePlay() {
     if (!audio.src) return;
     
-    // Ensure Web Audio context is un-suspended on user click
     if (audioCtx && audioCtx.state === "suspended") {
         audioCtx.resume();
     }
@@ -1555,17 +1897,6 @@ function updateLyrics() {
             }
         });
     }
-}
-
-function toggleSettings() {
-    document.getElementById("sideDrawer").classList.toggle("open");
-}
-
-function toggleMaximize() {
-    const container = document.getElementById("playerContainer");
-    const maxBtn = document.getElementById("maxBtn");
-    container.classList.toggle("maximized");
-    maxBtn.textContent = container.classList.contains("maximized") ? "Restore" : "Maximize";
 }
 
 const fontDropdown = document.getElementById("fontDropdown");
