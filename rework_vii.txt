@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synced Lyrics Player</title>
+
+<!-- Preload Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Comfortaa:wght@400;700&family=Fredoka:wght@400;600;700&family=Inter:wght@400;700&family=Lobster&family=Montserrat:wght@400;700&family=Nunito:wght@400;700&family=Pacifico&family=Playfair+Display:wght@700&family=Poppins:wght@400;700&family=Quicksand:wght@400;700&family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- JS MediaTags Library for parsing embedded MP3/FLAC metadata & cover art -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+
+<style>
+:root {
+    --bg-color: #ffeef4;
+    --bg-image: none;
+    --container-bg: rgba(255, 255, 255, 0.7);
+    --input-bg: rgba(255, 255, 255, 0.8);
+    --container-blur: 20px;
+    --btn-bg: #ff9ebb;
+    --btn-color: #ffffff;
+    --lyric-active-color: #ff9ebb;
+    --lyric-inactive-color: #ff9ebb;
+    --lyric-active-opacity: 1;
+    --lyric-inactive-opacity: 0.5;
+    --lyric-font-family: 'Fredoka', cursive, sans-serif;
+    --lyric-font-size: 26px;
+    --lyric-font-weight: 600;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    background-color: var(--bg-color);
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    color: var(--lyric-active-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: var(--lyric-font-family);
+    transition: background-color 0.4s ease;
+}
+
+.container {
+    width: 850px;
+    max-width: 92%;
+    padding: 35px 30px 25px 30px;
+    border-radius: 30px;
+    background: var(--container-bg);
+    backdrop-filter: blur(var(--container-blur));
+    -webkit-backdrop-filter: blur(var(--container-blur));
+    border: 2px dashed rgba(255, 158, 187, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    position: relative;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s ease;
+}
+
+.top-actions {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.top-actions button {
+    padding: 6px 14px;
+    font-size: 12px;
+    margin-bottom: 0;
+}
+
+h1 { 
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 26px;
+    color: var(--lyric-active-color);
+    letter-spacing: 0.5px;
+}
+
+/* Upload Controls Grid */
+.input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--input-bg);
+    padding: 16px;
+    border-radius: 20px;
+    border: 2px dashed rgba(255, 158, 187, 0.4);
+    text-align: left;
+}
+
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.upload-row label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--lyric-active-color);
+    min-width: 65px;
+}
+
+input[type="file"] {
+    flex-grow: 1;
+    padding: 4px 6px;
+    border: 1px solid rgba(255, 158, 187, 0.4);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--lyric-active-color);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button,
+input[type="file"]::file-selector-button {
+    background-color: var(--btn-bg);
+    color: var(--btn-color);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+textarea.lyrics-textarea {
+    width: 100%;
+    height: 55px;
+    border: 1px solid rgba(255, 158, 187, 0.4);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--lyric-active-color);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 8px 12px;
+    resize: none;
+    outline: none;
+}
+
+textarea.lyrics-textarea::placeholder {
+    color: var(--lyric-inactive-color);
+    opacity: 0.6;
+}
+
+textarea.lyrics-textarea:focus {
+    border-color: var(--btn-bg);
+}
+
+button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: var(--btn-bg);
+    color: var(--btn-color);
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+/* Lyrics Display Container */
+.lyrics {
+    height: 260px;
+    overflow-y: auto;
+    position: relative;
+    scroll-behavior: smooth;
+    padding: 110px 0;
+    flex-grow: 1;
+    margin-top: 10px;
+}
+
+.lyrics::-webkit-scrollbar { display: none; }
+.lyrics { -ms-overflow-style: none; scrollbar-width: none; }
+
+.line {
+    font-family: var(--lyric-font-family);
+    font-size: var(--lyric-font-size);
+    margin: 16px 0;
+    opacity: var(--lyric-inactive-opacity);
+    color: var(--lyric-inactive-color);
+    transform: scale(0.95);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.line.active {
+    opacity: var(--lyric-active-opacity);
+    color: var(--lyric-active-color);
+    font-weight: var(--lyric-font-weight);
+    transform: scale(1.1);
+}
+
+/* Custom Audio Player */
+.cute-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 158, 187, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    margin-top: 10px;
+}
+
+/* Track Metadata & Artwork Slot */
+.track-meta-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 170px;
+    min-width: 120px;
+    overflow: hidden;
+}
+
+.album-cover-wrapper {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 12px;
+    background: rgba(255, 158, 187, 0.2);
+    border: 1px solid rgba(255, 158, 187, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.album-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.album-cover-fallback {
+    font-size: 16px;
+    color: var(--lyric-active-color);
+}
+
+.track-text-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.track-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--lyric-active-color);
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.track-artist {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--lyric-inactive-color);
+    opacity: 0.8;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.play-pause-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.time-display {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lyric-active-color);
+    min-width: 75px;
+    user-select: none;
+}
+
+.seekbar-container {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.seekbar {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 10px;
+    background: rgba(255, 158, 187, 0.2);
+    outline: none;
+    cursor: pointer;
+}
+
+.seekbar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.volume-icon {
+    font-size: 13px;
+    color: var(--lyric-active-color);
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 55px;
+    height: 5px;
+    border-radius: 10px;
+    background: rgba(255, 158, 187, 0.2);
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    cursor: pointer;
+}
+
+/* Maximized Mode */
+.container.maximized {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 40px 60px;
+    border: none;
+}
+
+.container.maximized .input-section,
+.container.maximized h1 {
+    display: none;
+}
+
+.container.maximized .lyrics {
+    height: 100%;
+}
+
+/* Side Drawer Customization */
+.side-drawer {
+    position: fixed;
+    top: 0;
+    right: -380px;
+    width: 360px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: -10px 0 25px rgba(0,0,0,0.08);
+    padding: 25px;
+    z-index: 100;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.side-drawer.open {
+    right: 0;
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 2px dashed rgba(255, 158, 187, 0.3);
+    padding-bottom: 10px;
+}
+
+.drawer-header h3 {
+    margin: 0;
+    color: var(--lyric-active-color);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--lyric-active-color);
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: none;
+    padding: 0;
+}
+
+.settings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lyric-active-color);
+}
+
+.setting-item input[type="color"] {
+    border: 1px solid rgba(255, 158, 187, 0.4);
+    height: 35px;
+    width: 100%;
+    cursor: pointer;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.setting-item select,
+.setting-item input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 158, 187, 0.4);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--lyric-active-color);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+}
+
+.setting-item input[type="range"] {
+    width: 100%;
+    accent-color: var(--btn-bg);
+}
+
+.preset-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.preset-buttons button {
+    font-size: 11px;
+    padding: 8px 6px;
+    margin-bottom: 0;
+    border-radius: 10px;
+    box-shadow: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="playerContainer">
+    
+    <div class="top-actions">
+        <button onclick="toggleMaximize()" id="maxBtn">Maximize</button>
+        <button onclick="toggleSettings()">Customize</button>
+    </div>
+
+    <h1>Synced Lyrics Player</h1>
+
+    <!-- File & Lyrics Upload Section -->
+    <div class="input-section" id="inputSection">
+        <div class="upload-row">
+            <label for="musicUpload">Music</label>
+            <input type="file" id="musicUpload" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a">
+        </div>
+        
+        <div class="upload-row">
+            <label for="lrcUpload">LRC</label>
+            <input type="file" id="lrcUpload" accept=".lrc,.txt">
+        </div>
+
+        <textarea class="lyrics-textarea" id="manualLyricsInput" placeholder="Paste custom lyrics here..." oninput="loadManualLyrics()"></textarea>
+    </div>
+
+    <!-- Lyrics Container -->
+    <div class="lyrics" id="lyrics"></div>
+
+    <!-- Audio Element -->
+    <audio id="audio"></audio>
+
+    <!-- Custom Player Bar -->
+    <div class="cute-audio-player">
+        <div class="track-meta-container">
+            <div class="album-cover-wrapper">
+                <img id="albumCoverImg" class="album-cover-img" alt="Album Cover">
+                <span id="albumCoverFallback" class="album-cover-fallback">🎵</span>
+            </div>
+            <div class="track-text-details">
+                <span id="trackTitle" class="track-title">No song loaded</span>
+                <span id="trackArtist" class="track-artist">Select audio file</span>
+            </div>
+        </div>
+
+        <button class="play-pause-btn" id="playBtn" onclick="togglePlay()">▶</button>
+        <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+        <div class="seekbar-container">
+            <input type="range" class="seekbar" id="seekbar" value="0" min="0" max="100" step="0.1">
+        </div>
+        <div class="volume-container">
+            <span class="volume-icon">🔊</span>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+        </div>
+    </div>
+</div>
+
+<!-- Side Drawer Customization -->
+<div class="side-drawer" id="sideDrawer">
+    <div class="drawer-header">
+        <h3>Customization</h3>
+        <button class="close-btn" onclick="toggleSettings()">✖</button>
+    </div>
+
+    <div class="settings-grid">
+        <!-- Quick Theme Presets -->
+        <div class="setting-item">
+            <label>Quick Presets</label>
+            <div class="preset-buttons">
+                <button onclick="loadBuiltInPreset('pastelPink')">🌸 Pastel Pink</button>
+                <button onclick="loadBuiltInPreset('midnightBlue')">🫐 Midnight</button>
+                <button onclick="loadBuiltInPreset('matchaGreen')">🍵 Matcha</button>
+                <button onclick="loadBuiltInPreset('lavender')">🍇 Lavender</button>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed rgba(255, 158, 187, 0.4); margin: 4px 0;">
+
+        <!-- Preset Management (JSON) -->
+        <div class="setting-item">
+            <label>Theme Import / Export</label>
+            <div class="preset-buttons">
+                <button onclick="exportPreset()">💾 Save JSON</button>
+                <button onclick="document.getElementById('presetFileInput').click()">📂 Load JSON</button>
+            </div>
+            <input type="file" id="presetFileInput" accept=".json" style="display: none;">
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed rgba(255, 158, 187, 0.4); margin: 4px 0;">
+
+        <!-- Font Management & Google Font Loader -->
+        <div class="setting-item">
+            <label>Font Family</label>
+            <select id="fontDropdown">
+                <option value="Fredoka" selected>Fredoka (Default Rounded)</option>
+                <option value="Poppins">Poppins (Modern Sans)</option>
+                <option value="Inter">Inter (Clean Sans)</option>
+                <option value="Roboto">Roboto (Standard)</option>
+                <option value="Montserrat">Montserrat (Geometric)</option>
+
+                <option value="Playfair Display">Playfair Display (Serif)</option>
+                <option value="Bebas Neue">Bebas Neue (Display Caps)</option>
+                <option value="Pacifico">Pacifico (Handwritten)</option>
+                <option value="Lobster">Lobster (Script)</option>
+                <option value="Caveat">Caveat (Cursive)</option>
+                <option value="Roboto Mono">Roboto Mono (Monospace)</option>
+                <option value="CUSTOM">Custom Google Font...</option>
+            </select>
+
+            <div id="customFontGroup" style="display: none; margin-top: 6px;">
+                <input type="text" id="customFontInput" placeholder="Enter Google Font name...">
+                <button onclick="applyCustomFont()" style="width: 100%; margin-top: 6px; padding: 6px;">Apply Custom Font</button>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label>Font Size (<span id="fontSizeVal">26px</span>)</label>
+            <input type="range" id="fontSizeInput" min="16" max="48" step="1" value="26">
+        </div>
+
+        <div class="setting-item">
+            <label>Active Font Weight</label>
+            <select id="fontWeightInput">
+                <option value="400">Normal (400)</option>
+                <option value="600" selected>Semi-Bold (600)</option>
+                <option value="700">Bold (700)</option>
+                <option value="900">Black (900)</option>
+            </select>
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed rgba(255, 158, 187, 0.4); margin: 4px 0;">
+
+        <!-- Color & Opacity Controls -->
+        <div class="setting-item">
+            <label>Active Lyric Color</label>
+            <input type="color" id="activeColorInput" value="#ff9ebb">
+        </div>
+        <div class="setting-item">
+            <label>Active Lyric Opacity</label>
+            <input type="range" id="activeOpacityInput" min="0.1" max="1" step="0.05" value="1">
+        </div>
+        <div class="setting-item">
+            <label>Inactive Lyric Color</label>
+            <input type="color" id="inactiveColorInput" value="#ff9ebb">
+        </div>
+        <div class="setting-item">
+            <label>Inactive Lyric Opacity</label>
+            <input type="range" id="inactiveOpacityInput" min="0.1" max="1" step="0.05" value="0.5">
+        </div>
+        <div class="setting-item">
+            <label>Button Background</label>
+            <input type="color" id="btnBgInput" value="#ff9ebb">
+        </div>
+        <div class="setting-item">
+            <label>Button Text Color</label>
+            <input type="color" id="btnColorInput" value="#ffffff">
+        </div>
+        <div class="setting-item">
+            <label>Background Color</label>
+            <input type="color" id="bgColorInput" value="#ffeef4">
+        </div>
+
+        <!-- Glass & Layout Adjustments -->
+        <div class="setting-item">
+            <label>Container Backdrop Blur (<span id="blurVal">20px</span>)</label>
+            <input type="range" id="blurInput" min="0" max="40" value="20">
+        </div>
+        <div class="setting-item">
+            <label>Background Image URL</label>
+            <input type="text" id="bgImageInput" placeholder="https://example.com/image.jpg">
+        </div>
+    </div>
+</div>
+
+<script>
+const audio = document.getElementById("audio");
+const lyricsBox = document.getElementById("lyrics");
+const root = document.documentElement;
+
+const playBtn = document.getElementById("playBtn");
+const seekbar = document.getElementById("seekbar");
+const timeDisplay = document.getElementById("timeDisplay");
+const volumeSlider = document.getElementById("volumeSlider");
+
+const albumCoverImg = document.getElementById("albumCoverImg");
+const albumCoverFallback = document.getElementById("albumCoverFallback");
+const trackTitle = document.getElementById("trackTitle");
+const trackArtist = document.getElementById("trackArtist");
+
+let lyrics = [];
+let currentActiveIndex = -1;
+
+// Built-in Presets Definition
+const builtInPresets = {
+    pastelPink: {
+        fontFamily: "Fredoka",
+        fontSize: "26",
+        fontWeight: "600",
+        activeColor: "#ff9ebb",
+        activeOpacity: "1",
+        inactiveColor: "#ff9ebb",
+        inactiveOpacity: "0.5",
+        btnBg: "#ff9ebb",
+        btnColor: "#ffffff",
+        bgColor: "#ffeef4",
+        blur: "20",
+        bgImage: ""
+    },
+    midnightBlue: {
+        fontFamily: "Poppins",
+        fontSize: "26",
+        fontWeight: "600",
+        activeColor: "#38bdf8",
+        activeOpacity: "1",
+        inactiveColor: "#94a3b8",
+        inactiveOpacity: "0.5",
+        btnBg: "#38bdf8",
+        btnColor: "#0f172a",
+        bgColor: "#0f172a",
+        blur: "25",
+        bgImage: ""
+    },
+    matchaGreen: {
+        fontFamily: "Quicksand",
+        fontSize: "26",
+        fontWeight: "600",
+        activeColor: "#65a30d",
+        activeOpacity: "1",
+        inactiveColor: "#a3e635",
+        inactiveOpacity: "0.6",
+        btnBg: "#65a30d",
+        btnColor: "#ffffff",
+        bgColor: "#f7fee7",
+        blur: "15",
+        bgImage: ""
+    },
+    lavender: {
+        fontFamily: "Comfortaa",
+        fontSize: "26",
+        fontWeight: "700",
+        activeColor: "#a855f7",
+        activeOpacity: "1",
+        inactiveColor: "#c084fc",
+        inactiveOpacity: "0.5",
+        btnBg: "#a855f7",
+        btnColor: "#ffffff",
+        bgColor: "#faf5ff",
+        blur: "20",
+        bgImage: ""
+    }
+};
+
+function loadBuiltInPreset(key) {
+    if (builtInPresets[key]) {
+        applyPreset(builtInPresets[key]);
+    }
+}
+
+// Upload Handlers & ID3 Reader
+document.getElementById("musicUpload").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        audio.src = URL.createObjectURL(file);
+        playBtn.textContent = "▶";
+
+        // Default title to filename without extension
+        const defaultTitle = file.name.replace(/\.[^/.]+$/, "");
+        trackTitle.textContent = defaultTitle;
+        trackArtist.textContent = "Unknown Artist";
+
+        // Read embedded metadata & cover art with jsmediatags
+        if (window.jsmediatags) {
+            window.jsmediatags.read(file, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    if (tags.title) trackTitle.textContent = tags.title;
+                    if (tags.artist) trackArtist.textContent = tags.artist;
+
+                    if (tags.picture) {
+                        const picture = tags.picture;
+                        let base64String = "";
+                        for (let i = 0; i < picture.data.length; i++) {
+                            base64String += String.fromCharCode(picture.data[i]);
+                        }
+                        const base64 = "data:" + picture.format + ";base64," + window.btoa(base64String);
+                        albumCoverImg.src = base64;
+                        albumCoverImg.style.display = "block";
+                        albumCoverFallback.style.display = "none";
+                    } else {
+                        resetAlbumCover();
+                    }
+                },
+                onError: function() {
+                    resetAlbumCover();
+                }
+            });
+        } else {
+            resetAlbumCover();
+        }
+    }
+});
+
+function resetAlbumCover() {
+    albumCoverImg.src = "";
+    albumCoverImg.style.display = "none";
+    albumCoverFallback.style.display = "block";
+}
+
+document.getElementById("lrcUpload").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            parseAndLoadLyrics(event.target.result);
+        };
+        reader.readAsText(file);
+    }
+});
+
+function loadManualLyrics() {
+    const text = document.getElementById("manualLyricsInput").value;
+    if (text.trim()) {
+        parseAndLoadLyrics(text);
+    }
+}
+
+function togglePlay() {
+    if (!audio.src) return;
+    if (audio.paused) {
+        audio.play();
+        playBtn.textContent = "❚❚";
+    } else {
+        audio.pause();
+        playBtn.textContent = "▶";
+    }
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+audio.addEventListener("loadedmetadata", () => {
+    seekbar.max = audio.duration;
+    updateTimeDisplay();
+});
+
+audio.addEventListener("timeupdate", () => {
+    seekbar.value = audio.currentTime;
+    updateTimeDisplay();
+    updateSeekbarFill();
+    updateLyrics();
+});
+
+audio.addEventListener("ended", () => playBtn.textContent = "▶");
+
+seekbar.addEventListener("input", () => {
+    audio.currentTime = seekbar.value;
+    updateSeekbarFill();
+});
+
+volumeSlider.addEventListener("input", (e) => audio.volume = e.target.value);
+
+function updateTimeDisplay() {
+    timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+}
+
+function updateSeekbarFill() {
+    const percent = (audio.currentTime / (audio.duration || 1)) * 100;
+    const btnColor = getComputedStyle(root).getPropertyValue('--btn-bg').trim() || '#ff9ebb';
+    seekbar.style.background = `linear-gradient(to right, ${btnColor} 0%, ${btnColor} ${percent}%, rgba(255, 158, 187, 0.2) ${percent}%, rgba(255, 158, 187, 0.2) 100%)`;
+}
+
+// Parse LRC format
+function parseAndLoadLyrics(text) {
+    lyrics = [];
+    const lines = text.split("\n");
+
+    lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+
+        const match = line.match(/^\[(\d+):(\d+)(?:[:\.](\d+))?\](.*)/);
+
+        if (match) {
+            const minutes = parseInt(match[1], 10);
+            const seconds = parseInt(match[2], 10);
+            
+            let msStr = match[3] || "0";
+            if (msStr.length === 2) msStr += "0";
+            const milliseconds = parseInt(msStr, 10);
+
+            const totalTime = (minutes * 60) + seconds + (milliseconds / 1000);
+
+            lyrics.push({
+                time: totalTime,
+                text: match[4].trim()
+            });
+        }
+    });
+
+    lyrics.sort((a, b) => a.time - b.time);
+    renderLyrics();
+}
+
+function renderLyrics() {
+    lyricsBox.innerHTML = "";
+    currentActiveIndex = -1;
+
+    if (lyrics.length === 0) {
+        lyricsBox.innerHTML = "<div class='line'>Upload LRC or paste lyrics above</div>";
+        return;
+    }
+
+    lyrics.forEach((line) => {
+        const div = document.createElement("div");
+        div.classList.add("line");
+        div.textContent = line.text;
+
+        div.addEventListener("click", () => {
+            audio.currentTime = line.time;
+            if (audio.paused) togglePlay();
+        });
+
+        lyricsBox.appendChild(div);
+    });
+}
+
+function updateLyrics() {
+    if (lyrics.length === 0) return;
+
+    let currentTime = audio.currentTime;
+    let activeIndex = -1;
+
+    for (let i = 0; i < lyrics.length; i++) {
+        if (currentTime >= lyrics[i].time) {
+            activeIndex = i;
+        } else {
+            break;
+        }
+    }
+
+    if (activeIndex !== currentActiveIndex) {
+        currentActiveIndex = activeIndex;
+        const elements = lyricsBox.querySelectorAll(".line");
+
+        elements.forEach((element, index) => {
+            element.classList.remove("active");
+
+            if (index === activeIndex) {
+                element.classList.add("active");
+                element.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+        });
+    }
+}
+
+// Side Drawer Toggle
+function toggleSettings() {
+    document.getElementById("sideDrawer").classList.toggle("open");
+}
+
+// Maximize View Toggle
+function toggleMaximize() {
+    const container = document.getElementById("playerContainer");
+    const maxBtn = document.getElementById("maxBtn");
+    container.classList.toggle("maximized");
+    maxBtn.textContent = container.classList.contains("maximized") ? "Restore" : "Maximize";
+}
+
+// Font Handling & Google Font Injection
+const fontDropdown = document.getElementById("fontDropdown");
+const customFontGroup = document.getElementById("customFontGroup");
+
+fontDropdown.addEventListener("change", (e) => {
+    const val = e.target.value;
+    if (val === "CUSTOM") {
+        customFontGroup.style.display = "block";
+    } else {
+        customFontGroup.style.display = "none";
+        root.style.setProperty('--lyric-font-family', `'${val}', cursive, sans-serif`);
+    }
+});
+
+function applyCustomFont() {
+    const fontName = document.getElementById("customFontInput").value.trim();
+    if (!fontName) return;
+
+    const formattedFontName = fontName.replace(/\s+/g, '+');
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${formattedFontName}:wght@400;600;700;900&display=swap`;
+    
+    link.onload = () => {
+        root.style.setProperty('--lyric-font-family', `'${fontName}', sans-serif`);
+    };
+    document.head.appendChild(link);
+}
+
+// Controls & Sliders Real-time Sync
+document.getElementById("fontSizeInput").addEventListener("input", (e) => {
+    const val = e.target.value + "px";
+    root.style.setProperty('--lyric-font-size', val);
+    document.getElementById("fontSizeVal").textContent = val;
+});
+
+document.getElementById("fontWeightInput").addEventListener("change", (e) => {
+    root.style.setProperty('--lyric-font-weight', e.target.value);
+});
+
+document.getElementById("activeColorInput").addEventListener("input", (e) => root.style.setProperty('--lyric-active-color', e.target.value));
+document.getElementById("inactiveColorInput").addEventListener("input", (e) => root.style.setProperty('--lyric-inactive-color', e.target.value));
+document.getElementById("activeOpacityInput").addEventListener("input", (e) => root.style.setProperty('--lyric-active-opacity', e.target.value));
+document.getElementById("inactiveOpacityInput").addEventListener("input", (e) => root.style.setProperty('--lyric-inactive-opacity', e.target.value));
+document.getElementById("btnBgInput").addEventListener("input", (e) => {
+    root.style.setProperty('--btn-bg', e.target.value);
+    updateSeekbarFill();
+});
+document.getElementById("btnColorInput").addEventListener("input", (e) => root.style.setProperty('--btn-color', e.target.value));
+document.getElementById("bgColorInput").addEventListener("input", (e) => root.style.setProperty('--bg-color', e.target.value));
+
+document.getElementById("blurInput").addEventListener("input", (e) => {
+    const val = e.target.value + "px";
+    root.style.setProperty('--container-blur', val);
+    document.getElementById("blurVal").textContent = val;
+});
+
+document.getElementById("bgImageInput").addEventListener("input", (e) => {
+    const url = e.target.value.trim();
+    root.style.setProperty('--bg-image', url ? `url('${url}')` : 'none');
+});
+
+// JSON PRESET SYSTEM (EXPORT & IMPORT)
+function getCurrentPresetData() {
+    return {
+        fontFamily: fontDropdown.value === "CUSTOM" ? document.getElementById("customFontInput").value : fontDropdown.value,
+        isCustomFont: fontDropdown.value === "CUSTOM",
+        fontSize: document.getElementById("fontSizeInput").value,
+        fontWeight: document.getElementById("fontWeightInput").value,
+        activeColor: document.getElementById("activeColorInput").value,
+        activeOpacity: document.getElementById("activeOpacityInput").value,
+        inactiveColor: document.getElementById("inactiveColorInput").value,
+        inactiveOpacity: document.getElementById("inactiveOpacityInput").value,
+        btnBg: document.getElementById("btnBgInput").value,
+        btnColor: document.getElementById("btnColorInput").value,
+        bgColor: document.getElementById("bgColorInput").value,
+        blur: document.getElementById("blurInput").value,
+        bgImage: document.getElementById("bgImageInput").value
+    };
+}
+
+function exportPreset() {
+    const data = getCurrentPresetData();
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lyrics-player-preset.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+document.getElementById("presetFileInput").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const preset = JSON.parse(event.target.result);
+            applyPreset(preset);
+        } catch (err) {
+            alert("Invalid JSON Preset file!");
+        }
+    };
+    reader.readAsText(file);
+});
+
+function applyPreset(p) {
+    if (p.fontSize) {
+        document.getElementById("fontSizeInput").value = p.fontSize;
+        root.style.setProperty('--lyric-font-size', p.fontSize + "px");
+        document.getElementById("fontSizeVal").textContent = p.fontSize + "px";
+    }
+    if (p.fontWeight) {
+        document.getElementById("fontWeightInput").value = p.fontWeight;
+        root.style.setProperty('--lyric-font-weight', p.fontWeight);
+    }
+    if (p.activeColor) {
+        document.getElementById("activeColorInput").value = p.activeColor;
+        root.style.setProperty('--lyric-active-color', p.activeColor);
+    }
+    if (p.activeOpacity) {
+        document.getElementById("activeOpacityInput").value = p.activeOpacity;
+        root.style.setProperty('--lyric-active-opacity', p.activeOpacity);
+    }
+    if (p.inactiveColor) {
+        document.getElementById("inactiveColorInput").value = p.inactiveColor;
+        root.style.setProperty('--lyric-inactive-color', p.inactiveColor);
+    }
+    if (p.inactiveOpacity) {
+        document.getElementById("inactiveOpacityInput").value = p.inactiveOpacity;
+        root.style.setProperty('--lyric-inactive-opacity', p.inactiveOpacity);
+    }
+    if (p.btnBg) {
+        document.getElementById("btnBgInput").value = p.btnBg;
+        root.style.setProperty('--btn-bg', p.btnBg);
+        updateSeekbarFill();
+    }
+    if (p.btnColor) {
+        document.getElementById("btnColorInput").value = p.btnColor;
+        root.style.setProperty('--btn-color', p.btnColor);
+    }
+    if (p.bgColor) {
+        document.getElementById("bgColorInput").value = p.bgColor;
+        root.style.setProperty('--bg-color', p.bgColor);
+    }
+    if (p.blur) {
+        document.getElementById("blurInput").value = p.blur;
+        root.style.setProperty('--container-blur', p.blur + "px");
+        document.getElementById("blurVal").textContent = p.blur + "px";
+    }
+    if (p.bgImage !== undefined) {
+        document.getElementById("bgImageInput").value = p.bgImage;
+        root.style.setProperty('--bg-image', p.bgImage ? `url('${p.bgImage}')` : 'none');
+    }
+    if (p.fontFamily) {
+        if (p.isCustomFont) {
+            fontDropdown.value = "CUSTOM";
+            customFontGroup.style.display = "block";
+            document.getElementById("customFontInput").value = p.fontFamily;
+            applyCustomFont();
+        } else {
+            fontDropdown.value = p.fontFamily;
+            customFontGroup.style.display = "none";
+            root.style.setProperty('--lyric-font-family', `'${p.fontFamily}', sans-serif`);
+        }
+    }
+}
+</script>
+
+</body>
+</html>
